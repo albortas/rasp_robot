@@ -2,8 +2,7 @@ import numpy as np
 
 
 class Inverse:
-    def __init__(self, legtype="LEFT", L1=0.058, L2=0.10805, L3=0.1385):
-        self.legtype = legtype
+    def __init__(self, L1=0.058, L2=0.10805, L3=0.1385):
         self.L1 = L1
         self.L2 = L2
         self.L3 = L3
@@ -25,7 +24,7 @@ class Inverse:
         else:
             return D
 
-    def solve(self, xyz_coord):
+    def solve(self, legtype, xyz_coord):
         """Solucionador generico de cinematica inversa de piernas
 
         Args:
@@ -36,7 +35,7 @@ class Inverse:
         y = xyz_coord[1]
         z = xyz_coord[2]
         D = self.get_domain(x, y, z)
-        if self.legtype == "LEFT":
+        if legtype == "LEFT":
             return self.InverseKinematic(x, y, z, D, side=1)
         else:
             return self.InverseKinematic(x, y, z, D, side=-1)
@@ -63,7 +62,7 @@ class Inverse:
     
 if __name__ == "__main__":
     np.set_printoptions(precision=2, suppress=True)
-    ik = Inverse(legtype="R")
+    ik = Inverse()
     position = [0, -0.0685, -0.23]
-    theta = np.degrees(ik.solve(position))
+    theta = np.degrees(ik.solve("RIGHT",position))
     print(theta)

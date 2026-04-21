@@ -1,0 +1,100 @@
+[abort_controller]
+gpio_port = 17
+
+[lcd_screen_controller]
+address = "0x27"
+
+[remote_controller]
+device = "js0"
+
+[motion_controller.boards.pca9685_1]
+address = "0x40"
+frequency = 50
+
+[motion_controller.boards.pca9685_2]
+address = "0x42"
+frequency = 50
+
+[motion_controller.servos.FL_hip_roll]
+pca9685 = 1
+channel = 0
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.FL_hip_pitch]
+pca9685 = 1
+channel = 1
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.FL_knee]
+pca9685 = 1
+channel = 2
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.FR_hip_roll]
+pca9685 = 1
+channel = 4
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.FR_hip_pitch]
+pca9685 = 1
+channel = 5
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.FR_knee]
+pca9685 = 1
+channel = 6
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.RL_hip_roll]
+pca9685 = 2
+channel = 0
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.RL_hip_pitch]
+pca9685 = 2
+channel = 1
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.RL_knee]
+pca9685 = 2
+channel = 2
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.RR_hip_roll]
+pca9685 = 2
+channel = 4
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.RR_hip_pitch]
+pca9685 = 2
+channel = 5
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90
+
+[motion_controller.servos.RR_knee]
+pca9685 = 2
+channel = 6
+min_pulse = 500
+max_pulse = 2500
+rest_angle = 90

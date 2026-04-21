@@ -1,0 +1,12 @@
+numpy
+matplotlib<4.0.0,>=3.10.7
+scipy<2.0.0,>=1.16.3
+pygame
+pick
+tomlkit
+
+[pc]
+
+[rpi]
+adafruit-circuitpython-pca9685
+adafruit-circuitpython-motor

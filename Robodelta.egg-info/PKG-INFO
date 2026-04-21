@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: Robodelta
+Version: 2.0.0
+Summary: Robot Cuadrupedo
+Author-email: albortas <garlad628@gmail.com>
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: matplotlib<4.0.0,>=3.10.7
+Requires-Dist: scipy<2.0.0,>=1.16.3
+Requires-Dist: pygame
+Requires-Dist: pick
+Requires-Dist: tomlkit
+Provides-Extra: pc
+Provides-Extra: rpi
+Requires-Dist: adafruit-circuitpython-pca9685; extra == "rpi"
+Requires-Dist: adafruit-circuitpython-motor; extra == "rpi"

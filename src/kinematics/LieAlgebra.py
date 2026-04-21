@@ -162,7 +162,7 @@ def RPY(roll, pitch, yaw):
             [0, 0, 0, 1],
         ]
     )
-    return np.matmul(np.matmul(Roll, Pitch), Yaw)
+    return Yaw @ Pitch @ Roll
 
 
 def RotateTranslate(rotation, position):

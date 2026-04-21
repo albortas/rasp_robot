@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "Robodelta"
 version = "2.0.0"
@@ -7,15 +11,26 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.12"
+# Aqui van las librerias que funcionan en AMBOS lados
 dependencies = [
+    "numpy",
     "matplotlib (>=3.10.7,<4.0.0)",
     "scipy (>=1.16.3,<2.0.0)",
-]
-[tool.poetry]
-packages = [
-    {include = "src"}
+    "pygame",
+    "pick",
+    "tomlkit"
 ]
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+# AQUI ESTA LA MAGIA: Dependencias opcionales
+[project.optional-dependencies]
+pc = [
+    # Aqui pones librerias que solo usas para probar en la pc
+]
+rpi = [
+    # Aqui van las librerías exclusivas de la Raspberry Pi
+    "adafruit-circuitpython-pca9685",
+    "adafruit-circuitpython-motor",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
