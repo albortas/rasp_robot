@@ -1,0 +1,16 @@
+[abort_controller]
+gpio_port = 17
+
+[lcd_screen_controller]
+address = "0x27"
+
+[remote_controller]
+device = "js0"
+
+[motion_controller.boards.pca9685_1]
+address = "0x40"
+frequency = 50
+
+[motion_controller.boards.pca9685_2]
+address = "0x41"
+frequency = 50

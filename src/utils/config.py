@@ -14,7 +14,7 @@ class Config:
             print(config_dir)
             with open(config_dir, 'r') as file:
                 return tomlkit.load(file)
-        self.robot_cfg = load_toml("robot.toml")
+        self.robot_cfg = load_toml("config.toml")
     
     @property
     def boards(self):
