@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "Robodelta"
+name = "Robot"
 version = "2.0.0"
 description = "Robot Cuadrupedo"
 authors = [
@@ -28,8 +28,10 @@ pc = [
 ]
 rpi = [
     # Aqui van las librerías exclusivas de la Raspberry Pi
+    "adafruit-blinka",
     "adafruit-circuitpython-pca9685",
     "adafruit-circuitpython-motor",
+    "rpi-lgpio",
 ]
 
 [tool.setuptools.packages.find]

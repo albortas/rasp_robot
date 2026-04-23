@@ -1,48 +1,48 @@
 [FL_hip_roll]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2600
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [FL_hip_pitch]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [FL_knee]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [FR_hip_roll]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2600
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [FR_hip_pitch]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [FR_knee]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [RL_hip_roll]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
@@ -56,28 +56,28 @@ offset = 0
 
 [RL_knee]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [RR_hip_roll]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2630
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [RR_hip_pitch]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
 
 [RR_knee]
 min_pulse = 500
-max_pulse = 2500
+max_pulse = 2650
 rest_angle = 90
 invert_direction = false
 offset = 0
