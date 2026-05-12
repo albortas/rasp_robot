@@ -1,6 +1,7 @@
 .idea/
 .spyproject/
 .venv/
+.continue/
 __pycache__/
 poetry.lock
 .vscode/
