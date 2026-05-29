@@ -3,9 +3,11 @@ import tomli_w
 from pathlib import Path
 from typing import TYPE_CHECKING
 from src.utils.servo import Servo
+from src.utils.logs import log
 
 if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
+
 
 class TomlLoader:
     """
@@ -56,9 +58,9 @@ class TomlLoader:
         try:
             self.save_file()
         except Exception as e:
-            print(f"Error no se guardo el archivo de configuracion: {e}")
+            log.error(f"Error no se guardo el archivo de configuracion: {e}")
         else:
-            print(f"Archivo actualizado correctamente: {self.file_name}")
+            log.info(f"Archivo actualizado correctamente: {self.file_name}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from src.utils.logs import log
 
 if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
@@ -56,13 +57,11 @@ class ChannelsConfigurator:
                 f"Solo se puede configurar 1 o 2 PCAs. Recibido: {number_pcas}"
             )
         servos = self._servo_names
-        channels = []
-        pca_ids = []
         
         if number_pcas == 1:
             channels = self._enable_channels_single()
             pca_ids = [1] * len(servos)
-            print("Canales actulizados para SIMPLE PCA9685")
+            log.info("Canales actualizados para SIMPLE PCA9685")
         else:
             # Dividir servos entre 2 PCAs
             channels = self._enable_channels_dual()
@@ -73,7 +72,7 @@ class ChannelsConfigurator:
                     f"Actualmente hay {len(self._servo_names)}"
                 )
             pca_ids = [1] * mid + [2] * mid
-            print("Canales actualizados para DUAL PCA9685")
+            log.info("Canales actualizados para DUAL PCA9685")
 
         # Validar que hay suficientes canales para todos los servos
         if len(servos) != len(channels):
@@ -91,5 +90,5 @@ if __name__ == "__main__":
     repo = ServoRepository()
     loader = TomlLoader(repo)
     ch_cfg = ChannelsConfigurator(repo)
-    ch_cfg.update_channels(2)
+    ch_cfg.update_channels()
     loader.synchronize()

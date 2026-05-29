@@ -32,8 +32,7 @@ def setup_logging():
 
     # --- Handler 1: Archivo (TODO, incluido DEBUG) ---
     file_log = Path(LOGGER_NAME + ".log")
-    print(file_log)
-    file_handler = logging.FileHandler(file_log, mode="a")
+    file_handler = logging.FileHandler(file_log, mode="w")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(detailed)
 
