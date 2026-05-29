@@ -1,9 +1,9 @@
 [boards.pca9685_1]
-address = "0x40"
+address = 64
 frequency = 50
 
 [boards.pca9685_2]
-address = "0x42"
+address = 66
 frequency = 50
 
 [servos.FL_hip_roll]
@@ -12,7 +12,7 @@ channel = 0
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90
-offset = -5
+offset = 0
 invert_direction = false
 
 [servos.FL_hip_pitch]
@@ -61,8 +61,8 @@ offset = 0
 invert_direction = false
 
 [servos.RL_hip_roll]
-pca9685 = 1
-channel = 8
+pca9685 = 2
+channel = 0
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90
@@ -70,8 +70,8 @@ offset = 0
 invert_direction = false
 
 [servos.RL_hip_pitch]
-pca9685 = 1
-channel = 9
+pca9685 = 2
+channel = 1
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90
@@ -79,8 +79,8 @@ offset = 0
 invert_direction = false
 
 [servos.RL_knee]
-pca9685 = 1
-channel = 10
+pca9685 = 2
+channel = 2
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90
@@ -88,8 +88,8 @@ offset = 0
 invert_direction = false
 
 [servos.RR_hip_roll]
-pca9685 = 1
-channel = 12
+pca9685 = 2
+channel = 4
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90
@@ -97,8 +97,8 @@ offset = 0
 invert_direction = false
 
 [servos.RR_hip_pitch]
-pca9685 = 1
-channel = 13
+pca9685 = 2
+channel = 5
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90
@@ -106,8 +106,8 @@ offset = 0
 invert_direction = false
 
 [servos.RR_knee]
-pca9685 = 1
-channel = 14
+pca9685 = 2
+channel = 6
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 90

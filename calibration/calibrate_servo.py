@@ -1,7 +1,7 @@
 from pick import pick
 from src.utils.servo_repository import ServoRepository
 from src.utils.toml_loader import TomlLoader
-from src.utils.servo_configurator import ServoConfigurator
+from src.utils.channels_configurator import ChannelsConfigurator
 
 try:
     from src.hardware.hardware_manager import HardwareManager
@@ -15,9 +15,7 @@ class CalibratorApp:
     def __init__(self):
         self.repo = ServoRepository()
         self.loader = TomlLoader(self.repo)
-        self.loader.load_from_file()
-        
-        self.configurator = ServoConfigurator(self.repo, self.loader)
+        self.configurator = ChannelsConfigurator(self.repo)
         
         self.hw = None
         if HARDWARE_AVAILABLE:
@@ -31,6 +29,15 @@ class CalibratorApp:
         
         # Agrupar por patas
         self._leg_map()
+    
+    def main(self):
+        try:
+            self.main_menu()
+        except Exception as e:
+            print(f"Error en menu: {e}")
+        finally:
+            self.loader.synchronize()
+            print("Calibracion finalizada.")
         
     def _leg_map(self):
         self.legs = ["FL", "FR", "RL", "RR"]
@@ -57,7 +64,6 @@ class CalibratorApp:
             else:
                 if self.hw:
                     self.hw.deinit()
-                print("Calibracion finalizada.")
                 break
 
     def leg_menu(self, leg):
@@ -110,28 +116,28 @@ class CalibratorApp:
             title = (f"--- Ajuste Fino: {joint_name} ---\n"
                      f"Offset actual: {servo.offset}\n"
                      f"Usando rest_angle: {servo.rest_angle} como base de calibracion.")
-            options = ["Incrementar Offset (+1)", "Decrementar Offset (-1)", "Volver"]
+            options = ["Incrementar Offset (+1)", "Decrementar Offset (-1)", "Guardar", "Volver"]
             
             _, index = pick(options, title, default_index=cursor)
             cursor = index
             
             if index == 0:
                 new_offset = servo.offset + 1
-                self.configurator.update_offset(joint_name, new_offset)
-                self.loader.synchronize() # Guardar cambios en disco
+                self.repo.update_servo(joint_name, offset=new_offset)
                 self._send_angle(joint_name, servo.rest_angle)
             elif index == 1:
                 new_offset = servo.offset - 1
-                self.configurator.update_offset(joint_name, new_offset)
-                self.loader.synchronize()
+                self.repo.update_servo(joint_name, offset=new_offset)
                 self._send_angle(joint_name, servo.rest_angle)
             elif index == 2:
+                self.loader.synchronize()
+            elif index == 3:
                 break
 
     def _toggle_inversion(self, joint_name):
         servo = self.repo.select_servo(joint_name)
         new_val = not servo.invert_direction
-        self.configurator.update_invert_direction(joint_name, new_val)
+        self.repo.update_servo(joint_name, invert_direction=new_val)
         self.loader.synchronize()
         self._send_angle(joint_name, servo.rest_angle)
 
@@ -139,17 +145,15 @@ class CalibratorApp:
         cursor = 2 # Default 90
         while True:
             title = f"--- Test Presets: {joint_name} ---"
-            options = ["Ir a 0", "Ir a 45", "Ir a 90", "Ir a 135", "Ir a 180", "Volver"]
+            options = ["Ir a 45", "Ir a 90", "Ir a 135", "Volver"]
             
             _, index = pick(options, title, default_index=cursor)
             cursor = index
             
-            if index == 0: self._send_angle(joint_name, 0)
-            elif index == 1: self._send_angle(joint_name, 45)
-            elif index == 2: self._send_angle(joint_name, 90)
-            elif index == 3: self._send_angle(joint_name, 135)
-            elif index == 4: self._send_angle(joint_name, 180)
-            elif index == 5: break
+            if index == 0: self._send_angle(joint_name, 45)
+            elif index == 1: self._send_angle(joint_name, 90)
+            elif index == 2: self._send_angle(joint_name, 135)
+            elif index == 3: break
 
     def _send_angle(self, joint_name, angle):
         if self.hw:
@@ -157,4 +161,4 @@ class CalibratorApp:
 
 if __name__ == "__main__":
     app = CalibratorApp()
-    app.main_menu()
+    app.main()

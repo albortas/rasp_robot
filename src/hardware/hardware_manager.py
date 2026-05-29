@@ -25,21 +25,16 @@ class HardwareManager:
         boards_config = self.loader.boards
         
         # Encontrar que placas PCA necesitan ser inicializadas
-        needed_pcas = set()
-        for servo in self.repository.get_servos():
-            needed_pcas.add(servo.pca9685)
+        needed_pcas = {servo.pca9685 for servo in self.repository.get_servos()}
             
         if 1 in needed_pcas and "pca9685_1" in boards_config:
             b1_cfg = boards_config["pca9685_1"]
-            # Convertir address a int de forma segura (ej. "0x40" -> 64)
-            address_1 = int(str(b1_cfg["address"]), 0) if isinstance(b1_cfg["address"], str) else b1_cfg["address"]
-            self.pcas[1] = PCA9685(self.i2c, address=address_1)
+            self.pcas[1] = PCA9685(self.i2c, address=b1_cfg["address"])
             self.pcas[1].frequency = b1_cfg["frequency"]
             
         if 2 in needed_pcas and "pca9685_2" in boards_config:
             b2_cfg = boards_config["pca9685_2"]
-            address_2 = int(str(b2_cfg["address"]), 0) if isinstance(b2_cfg["address"], str) else b2_cfg["address"]
-            self.pcas[2] = PCA9685(self.i2c, address=address_2)
+            self.pcas[2] = PCA9685(self.i2c, address=b2_cfg["address"])
             self.pcas[2].frequency = b2_cfg["frequency"]
 
     def set_angle(self, name: str, angle: float):

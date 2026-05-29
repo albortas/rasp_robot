@@ -13,12 +13,15 @@ class TomlLoader:
     y cargarlos en el Repositorio. También sincroniza los cambios
     del repositorio de vuelta al archivo.
     """
-    
-    def __init__(self, repository: 'ServoRepository'):
+
+    def __init__(self, repository: "ServoRepository"):
         self.file_name = "robot.toml"
-        self.file_path = Path(__file__).resolve().parent.parent / "config" / self.file_name
+        self.file_path = (
+            Path(__file__).resolve().parent.parent / "config" / self.file_name
+        )
         self.repository = repository
-        self._boards_data: dict = {} # Guarda la config de las placas
+        self._boards_data: dict = {}  # Guarda la config de las placas
+        self.load_from_file()
 
     @property
     def boards(self) -> dict:
@@ -45,21 +48,25 @@ class TomlLoader:
         for servo in self.repository.get_servos():
             data_save["servos"][servo.name] = servo.to_dict()
 
-        if tomli_w is not None:
-            with open(self.file_path, "wb") as f:
-                tomli_w.dump(data_save, f)
-        else:
-            with open(self.file_path, "w", encoding="utf-8") as f:
-                f.write(tomllib.dumps(data_save))
+        with open(self.file_path, "wb") as f:
+            tomli_w.dump(data_save, f)
 
     def synchronize(self):
         """Atajo: guarda el estado actual del repositorio en el archivo."""
-        self.save_file()
+        try:
+            self.save_file()
+        except Exception as e:
+            print(f"Error no se guardo el archivo de configuracion: {e}")
+        else:
+            print(f"Archivo actualizado correctamente: {self.file_name}")
+
 
 if __name__ == "__main__":
     from src.utils.servo_repository import ServoRepository
+
     repo = ServoRepository()
     loader = TomlLoader(repo)
 
     loader.load_from_file()
-    print(repo.get_servo_names())
+    needed_pcas = {servo.pca9685 for servo in repo.get_servos()}
+    print(needed_pcas)

@@ -1,8 +1,9 @@
 .idea/
 .spyproject/
-.venv/
-.continue/
-__pycache__/
-poetry.lock
 .vscode/
+.continue/
+.venv/
 *.egg-info/
+*.log
+__pycache__/
+auxiliar/
