@@ -4,6 +4,7 @@
 .continue/
 .venv/
 *.egg-info/
+*.lgd-nfy0
 *.log
 __pycache__/
 auxiliar/
