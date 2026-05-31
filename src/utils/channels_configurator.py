@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from src.utils.logs import log
+from src.utils.logger import log
 
 if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository

@@ -2,7 +2,7 @@ from pick import pick
 from src.utils.servo_repository import ServoRepository
 from src.utils.toml_loader import TomlLoader
 from src.utils.channels_configurator import ChannelsConfigurator
-from src.utils.logs import log
+from src.utils.logger import log
 
 try:
     from src.hardware.hardware_manager import HardwareManager

@@ -3,7 +3,7 @@ import tomli_w
 from pathlib import Path
 from typing import TYPE_CHECKING
 from src.utils.servo import Servo
-from src.utils.logs import log
+from src.utils.logger import log
 
 if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
