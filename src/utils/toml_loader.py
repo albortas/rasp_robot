@@ -65,10 +65,8 @@ class TomlLoader:
 
 if __name__ == "__main__":
     from src.utils.servo_repository import ServoRepository
-
     repo = ServoRepository()
     loader = TomlLoader(repo)
-
-    loader.load_from_file()
+    print(loader.boards)
     needed_pcas = {servo.pca9685 for servo in repo.get_servos()}
     print(needed_pcas)

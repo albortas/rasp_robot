@@ -1,18 +1,21 @@
 from busio import I2C
 from board import SCL, SDA
 from adafruit_pca9685 import PCA9685
+from src.utils.logger import log
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
     from src.utils.toml_loader import TomlLoader
 
+
 class HardwareManager:
     """
     Administrador principal de hardware para los servos del Robodelta.
     Se integra con ServoRepository y TomlLoader para manejar placas PCA9685 de manera dinamica.
     """
-    def __init__(self, loader: 'TomlLoader', repository: 'ServoRepository'):
+
+    def __init__(self, loader: "TomlLoader", repository: "ServoRepository"):
         self.loader = loader
         self.repository = repository
         self.i2c = I2C(SCL, SDA)
@@ -21,21 +24,24 @@ class HardwareManager:
         self.go_to_rest_pose()
 
     def _init_boards(self):
-        """Inicializa las placas PCA9685 necesarias segun la configuracion de los servos."""
+        """Inicializa placas PCA9685 dinamicamente segun configuracion."""
         boards_config = self.loader.boards
-        
+
         # Encontrar que placas PCA necesitan ser inicializadas
         needed_pcas = {servo.pca9685 for servo in self.repository.get_servos()}
-            
-        if 1 in needed_pcas and "pca9685_1" in boards_config:
-            b1_cfg = boards_config["pca9685_1"]
-            self.pcas[1] = PCA9685(self.i2c, address=b1_cfg["address"])
-            self.pcas[1].frequency = b1_cfg["frequency"]
-            
-        if 2 in needed_pcas and "pca9685_2" in boards_config:
-            b2_cfg = boards_config["pca9685_2"]
-            self.pcas[2] = PCA9685(self.i2c, address=b2_cfg["address"])
-            self.pcas[2].frequency = b2_cfg["frequency"]
+        log.info(f"Inicializando placas PCA: {needed_pcas}")
+
+        for pca_id in needed_pcas:
+            config_key = f"pca9685_{pca_id}"
+            if config_key not in boards_config:
+                raise RuntimeError(f"Configuracion para {config_key} no encontrada")
+
+            cfg = boards_config[config_key]
+            self.pcas[pca_id] = PCA9685(self.i2c, address=cfg["address"])
+            self.pcas[pca_id].frequency = cfg["frequency"]
+            log.debug(
+                f"PCA {pca_id}: addr=0x{cfg['address']:02X}, freq={cfg['frequency']}Hz"
+            )
 
     def set_angle(self, name: str, angle: float):
         """
@@ -43,33 +49,35 @@ class HardwareManager:
         Calcula el duty cycle manualmente basandose en min_pulse, max_pulse, offset e invert_direction.
         """
         servo = self.repository.select_servo(name)
-        
+
         # 1. Aplicar inversion de direccion (asumimos un rango base de 0 a 180)
-        if servo.invert_direction:
-            angle = 180.0 - angle
-            
+        angle = (180.0 - angle) if servo.invert_direction else angle
+
         # 2. Aplicar offset de calibracion
         angle += servo.offset
-        
+
         # 3. Limitar angulo entre 0 y 180 grados de forma segura
         angle = max(0.0, min(180.0, angle))
-        
+
         # 4. Mapear a rango de pulso (min_pulse a max_pulse)
         pulse_range = servo.max_pulse - servo.min_pulse
         pulse_us = servo.min_pulse + (pulse_range * angle / 180.0)
-        
+
         # 5. Enviar a la placa PCA
+
         if servo.pca9685 in self.pcas:
             pca = self.pcas[servo.pca9685]
             pulse_seconds = pulse_us / 1_000_000.0
-            
+
             # Calcular el duty cycle (0 a 0xFFFF, o sea 65535)
             duty_cycle = int(pulse_seconds * pca.frequency * 0xFFFF)
-            
+
             # Asignar al canal correspondiente
             pca.channels[servo.channel].duty_cycle = duty_cycle
         else:
-            raise RuntimeError(f"PCA9685 ID {servo.pca9685} no esta inicializada para el servo {name}")
+            raise RuntimeError(
+                f"PCA9685 ID {servo.pca9685} no esta inicializada para el servo {name}"
+            )
 
     def set_leg_angles(self, leg_id: str, angles_deg: list):
         """
@@ -80,8 +88,10 @@ class HardwareManager:
         """
         leg_servos = self.repository.get_by_leg(leg_id)
         if len(leg_servos) != len(angles_deg):
-            raise ValueError(f"La pata {leg_id} tiene {len(leg_servos)} servos, pero se pasaron {len(angles_deg)} angulos.")
-            
+            raise ValueError(
+                f"La pata {leg_id} tiene {len(leg_servos)} servos, pero se pasaron {len(angles_deg)} angulos."
+            )
+
         for servo, angle in zip(leg_servos, angles_deg):
             self.set_angle(servo.name, angle)
 
@@ -104,21 +114,24 @@ class HardwareManager:
         for pca in self.pcas.values():
             pca.deinit()
 
+
 if __name__ == "__main__":
     from src.utils.servo_repository import ServoRepository
     from src.utils.toml_loader import TomlLoader
-    
+
     repo = ServoRepository()
     loader = TomlLoader(repo)
     loader.load_from_file()
-    
+
     try:
         hw = HardwareManager(loader, repo)
         print("Hardware inicializado correctamente.")
         print(f"Placas PCA detectadas e inicializadas: {list(hw.pcas.keys())}")
-        
+
         # Ejemplo: hw.set_angle("FL_hip_roll", 90)
         hw.deinit()
         print("Recursos liberados correctamente.")
     except Exception as e:
-        print(f"No se pudo inicializar el hardware I2C (esto es normal si no estas en la Raspberry Pi):\n{e}")
+        print(
+            f"No se pudo inicializar el hardware I2C (esto es normal si no estas en la Raspberry Pi):\n{e}"
+        )
