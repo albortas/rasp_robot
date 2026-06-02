@@ -158,18 +158,19 @@ class CalibratorApp:
     def preset_menu(self, joint_name):
         cursor = 2  # Default 90
         while True:
+            servo = self.repo.select_servo(joint_name)
             title = f"--- Test Presets: {joint_name} ---"
-            options = ["Ir a 45", "Ir a 90", "Ir a 135", "Volver"]
+            options = [f"Ir a {servo.rest_angle - 45}", f"Ir a {servo.rest_angle}", f"Ir a {servo.rest_angle + 45}", "Volver"]
 
             _, index = pick(options, title, default_index=cursor)
             cursor = index
 
             if index == 0:
-                self._send_angle(joint_name, 45)
+                self._send_angle(joint_name, servo.rest_angle - 45)
             elif index == 1:
-                self._send_angle(joint_name, 90)
+                self._send_angle(joint_name, servo.rest_angle)
             elif index == 2:
-                self._send_angle(joint_name, 135)
+                self._send_angle(joint_name, servo.rest_angle + 45)
             elif index == 3:
                 break
 

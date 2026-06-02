@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from busio import I2C
 from board import SCL, SDA
 from adafruit_pca9685 import PCA9685
@@ -8,6 +9,10 @@ if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
     from src.utils.toml_loader import TomlLoader
 
+@dataclass
+class CalibrationConfig:
+    zero_angle_hip: int = 90
+    zero_angle_knee: int = 180
 
 class HardwareManager:
     """
@@ -18,6 +23,7 @@ class HardwareManager:
     def __init__(self, loader: "TomlLoader", repository: "ServoRepository"):
         self.loader = loader
         self.repository = repository
+        self.config = CalibrationConfig()
         self.i2c = I2C(SCL, SDA)
         self.pcas = {}
         self._init_boards()
@@ -52,22 +58,24 @@ class HardwareManager:
 
         # 1. Aplicar inversion de direccion (asumimos un rango base de 0 a 180)
         angle = (180.0 - angle) if servo.invert_direction else angle
+        
+        # 2. Aplicar angulo cero de calibracion segun resolucion cinematica inversa.
+        angle += self.config.zero_angle_hip if "hip" in name.split("_") else self.config.zero_angle_knee
 
-        # 2. Aplicar offset de calibracion
+        # 3. Aplicar offset de calibracion
         angle += servo.offset
 
-        # 3. Limitar angulo entre 0 y 180 grados de forma segura
+        # 4. Limitar angulo entre 0 y 180 grados de forma segura
         angle = max(0.0, min(180.0, angle))
 
-        # 4. Mapear a rango de pulso (min_pulse a max_pulse)
+        # 5. Mapear a rango de pulso (min_pulse a max_pulse)
         pulse_range = servo.max_pulse - servo.min_pulse
         pulse_us = servo.min_pulse + (pulse_range * angle / 180.0)
 
-        # 5. Enviar a la placa PCA
-
+        # 6. Enviar a la placa PCA
         if servo.pca9685 in self.pcas:
             pca = self.pcas[servo.pca9685]
-            pulse_seconds = pulse_us / 1_000_000.0
+            pulse_seconds = pulse_us / 1_000_000
 
             # Calcular el duty cycle (0 a 0xFFFF, o sea 65535)
             duty_cycle = int(pulse_seconds * pca.frequency * 0xFFFF)
