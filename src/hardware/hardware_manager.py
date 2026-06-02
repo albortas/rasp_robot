@@ -9,10 +9,15 @@ if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
     from src.utils.toml_loader import TomlLoader
 
-@dataclass
-class CalibrationConfig:
-    zero_angle_hip: int = 90
-    zero_angle_knee: int = 180
+@dataclass(frozen=True)
+class CalibrationParams:
+    """
+    Parametros de calibracion para los angulos de reposo.
+    Inmutables para evitar cambios accidentales durante la calibracion.
+    Se pueden ajustar segun la resolucion cinematica inversa del robot.
+    """
+    hip_zero_angle: int = 90
+    knee_zero_angle: int = 180
 
 class HardwareManager:
     """
@@ -23,7 +28,7 @@ class HardwareManager:
     def __init__(self, loader: "TomlLoader", repository: "ServoRepository"):
         self.loader = loader
         self.repository = repository
-        self.config = CalibrationConfig()
+        self.config = CalibrationParams()
         self.i2c = I2C(SCL, SDA)
         self.pcas = {}
         self._init_boards()
@@ -60,7 +65,7 @@ class HardwareManager:
         angle = (180.0 - angle) if servo.invert_direction else angle
         
         # 2. Aplicar angulo cero de calibracion segun resolucion cinematica inversa.
-        angle += self.config.zero_angle_hip if "hip" in name.split("_") else self.config.zero_angle_knee
+        angle += self.config.hip_zero_angle if "hip" in name.split("_") else self.config.knee_zero_angle
 
         # 3. Aplicar offset de calibracion
         angle += servo.offset
