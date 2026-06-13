@@ -64,7 +64,7 @@ line3, = ax3.plot(puntos[:,0], puntos[:,2], 'k-o', lw=2, markersize=8, markerfac
 ax3.set_title('Plano XZ')
 ax3.set_xlabel('X')
 ax3.set_ylabel('Z')
-ax3.set_xlim(-max_range, max_range)
+ax3.set_xlim(max_range, -max_range)
 ax3.set_ylim(-max_range, max_range/3)
 ax3.xaxis.set_major_locator(MaxNLocator(5))
 ax3.yaxis.set_major_locator(MaxNLocator(5))
@@ -85,7 +85,7 @@ s_theta0 = Slider(
 )
 
 s_theta1 = Slider(ax_theta1, 'Theta_1', -90, 90, valinit= theta1, valstep=1)
-s_theta2 = Slider(ax_theta2, 'Theta_2', 0, 180, valinit= theta2, valstep=1)
+s_theta2 = Slider(ax_theta2, 'Theta_2', -180, 0, valinit= theta2, valstep=1)
 
 def update(val):
     # Obtenemos los valores actulaes de los sliders
