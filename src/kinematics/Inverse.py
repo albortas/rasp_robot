@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Inverse:
-    def __init__(self, legtype="LEFT", L1=0.058, L2=0.10805, L3=0.1385):
+    def __init__(self, legtype="LEFT", L1=0.0615, L2=0.108, L3=0.1302):
         self.legtype = legtype
         self.L1 = L1
         self.L2 = L2

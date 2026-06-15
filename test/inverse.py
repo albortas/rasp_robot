@@ -11,7 +11,7 @@ ik = Inverse(legtype="LEFT")
 fk = Forward(legtype="LEFT")
 
 # == CONFIGURACION INICIAL ==
-x0, y0, z0 = 0.0, 0.0685, -0.24655
+x0, y0, z0 = 0.0, 0.0615, -0.2382
 
 # Crear figura
 fig = plt.figure(figsize=(10, 10))
