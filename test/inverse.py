@@ -16,11 +16,12 @@ x0, y0, z0 = 0.0, 0.0615, -0.2382
 # Crear figura
 fig = plt.figure(figsize=(10, 10))
 ax3d = fig.add_subplot(121, projection="3d")
+plt.subplots_adjust(bottom=0.3)
 
 # Sliders
-ax_x = plt.axes([0.1, 0.3, 0.3, 0.03])
-ax_y = plt.axes([0.1, 0.25, 0.3, 0.03])
-ax_z = plt.axes([0.1, 0.2, 0.3, 0.03])
+ax_x = plt.axes([0.25, 0.15, 0.5, 0.03])
+ax_y = plt.axes([0.25, 0.1, 0.5, 0.03])
+ax_z = plt.axes([0.25, 0.05, 0.5, 0.03])
 
 s_x = Slider(ax_x, "X", -0.24, 0.24, valinit=x0)
 s_y = Slider(ax_y, "Y", -0.2, 0.2, valinit=y0)
