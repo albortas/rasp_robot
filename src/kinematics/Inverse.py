@@ -14,7 +14,7 @@ class Inverse:
         :param x, y, z: Distancia de cadera a pie en cada dimension
         :return: Dominio de la pierna D.
         """
-        D = (y**2 + z**2 - self.L1**2 + x**2 - self.L2**2 - self.L3**2) / (
+        D = (x**2 + y**2 + z**2 - self.L1**2 - self.L2**2 - self.L3**2) / (
             2 * self.L2 * self.L3
         )
         if D > 1 or D < -1:
@@ -54,7 +54,9 @@ class Inverse:
             print("SQRT NEGATIVO")
             AG_cuadrado = 0.0
         AG = np.sqrt(AG_cuadrado)
-        theta1 = -np.arctan2(z, y) - np.arctan2(AG, side * self.L1)
+        num = -(z/y + AG/self.L1)
+        den = 1 - (z/y)*(AG/self.L1)
+        theta1 = np.arctan(num/den)
         theta3 = np.arccos(D)
         theta2 = np.arctan2(x, AG) - np.arctan2(
             self.L3 * np.sin(theta3), self.L2 + self.L3 * np.cos(theta3)
@@ -66,5 +68,5 @@ if __name__ == "__main__":
     np.set_printoptions(precision=2, suppress=True)
     ik = Inverse()
     position = [0, -0.0685, -0.23]
-    theta = np.degrees(ik.solve("RIGHT", position))
+    theta = np.degrees(ik.solve(position))
     print(theta)
