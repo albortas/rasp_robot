@@ -54,19 +54,64 @@ class Inverse:
             print("SQRT NEGATIVO")
             AG_cuadrado = 0.0
         AG = np.sqrt(AG_cuadrado)
-        num = -(z/y + AG/self.L1)
-        den = 1 - (z/y)*(AG/self.L1)
-        theta1 = np.arctan(num/den)
+        num = -(z / y + AG / self.L1)
+        den = 1 - (z / y) * (AG / self.L1)
+        theta1 = np.arctan(num / den)
         theta3 = np.arccos(D)
         theta2 = np.arctan2(x, AG) - np.arctan2(
             self.L3 * np.sin(theta3), self.L2 + self.L3 * np.cos(theta3)
         )
         return np.array([-theta1, -theta2, -theta3])
 
+    def get_range(self, y, z):
+        lower_limit_base = self.L1**2 + (self.L2 - self.L3) ** 2
+        upper_limit_base = self.L1**2 + (self.L2 + self.L3) ** 2
+
+        # Efecto de las variables fijas en el plano YZ
+        sum_squares_yz = y**2 + z**2
+
+        # 1. Validacion de seguridad ¿El punto YZ está fuera del alcance máximo del robot?
+        if sum_squares_yz > upper_limit_base:
+            distance_yz = np.sqrt(sum_squares_yz)
+            max_distance = np.sqrt(upper_limit_base)
+            print(
+                f"❌ Error: La combinación (y={y}, z={z}) está fuera del espacio de trabajo."
+            )
+            print(
+                f"   Distancia actual en YZ: {distance_yz:.4f} m | Máxima permitida total: {max_distance:.4f} m"
+            )
+            return None
+
+        # 2. Aplicación de las fórmulas con las constantes de control I y S
+        I = lower_limit_base - sum_squares_yz
+        S = upper_limit_base - sum_squares_yz
+
+        # Filtro max(0, I) para evitar raíces cuadradas de números negativos
+        I_filtrado = max(0.0, I)
+
+        # 3. Cálculo de los límites físicos reales para X
+        x_min = np.sqrt(I_filtrado)
+        x_max = np.sqrt(S)
+
+        # Mostrar resultados formateados en pantalla
+        print(f"=== RANGOS VÁLIDOS PARA X (con y = {y} m, z = {z} m) ===")
+        if x_min == 0:
+            print("✅ Rango continuo: El eje X puede cruzar por el centro (0).")
+            print(
+                f"   Intervalo total de movimiento: [{-x_max:.4f} a {x_max:.4f}] metros"
+            )
+        else:
+            print("⚠️ Zona muerta detectada: El eje X NO puede acercarse al centro.")
+            print(f"   Rango Positivo: [{x_min:.4f} a {x_max:.4f}] metros")
+            print(f"   Rango Negativo: [{-x_max:.4f} a {-x_min:.4f}] metros")
+
+        return (x_min, x_max)
+
 
 if __name__ == "__main__":
-    np.set_printoptions(precision=2, suppress=True)
+    np.set_printoptions(precision=3, suppress=True)
     ik = Inverse()
     position = [0, -0.0685, -0.23]
     theta = np.degrees(ik.solve(position))
     print(theta)
+    ik.get_range(0.0615, 0.12)
