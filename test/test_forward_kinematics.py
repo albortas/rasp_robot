@@ -6,7 +6,7 @@ from matplotlib.widgets import Slider
 from src.kinematics.forward import Forward
 
 # Iniciamos el objeto
-fk = Forward("LEFT")
+fk = Forward()
 
 # Datos del hombro (sholder)
 theta0, theta1, theta2 = 0, 0, 0
@@ -14,7 +14,7 @@ p0 = np.array([0, 0, 0])
 theta = np.array([theta0, theta1, theta2])
 
 # Datos del robot
-p1, p2, p3 = fk.solve(theta)
+p1, p2, p3 = fk.solve("LEFT",theta)
 puntos = np.array([p0, p1, p2, p3])
 
 # Crear figura
@@ -108,7 +108,7 @@ def update(val):
     theta = np.radians(theta_grados)
 
     # Resolvemos la cinematica directa
-    p1, p2, p3 = fk.solve(theta)
+    p1, p2, p3 = fk.solve("LEFT", theta)
     puntos = np.array([p0, p1, p2, p3])
 
     # Actualizamos la figura
