@@ -150,8 +150,8 @@ class Inverse:
 if __name__ == "__main__":
     np.set_printoptions(precision=3, suppress=True)
     ik = Inverse()
-    position = [0, -0.0685, -0.23]
-    theta = np.degrees(ik.solve(position))
+    position = [0, 0.0615, -0.18]
+    theta = np.degrees(ik.solve("LEFT", position))
     log.info(theta)
     ik.get_range(-0.15)
 
