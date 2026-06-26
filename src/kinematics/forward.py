@@ -1,21 +1,30 @@
+from typing import Tuple, List, Union
 import numpy as np
 
 
 class Forward:
-    def __init__(self, legtype="LEFT", L1=0.0615, L2=0.108, L3=0.1302):
-        self.legtype = legtype
+    def __init__(
+        self,
+        L1: float = 0.0615,
+        L2: float = 0.108,
+        L3: float = 0.1302,
+    ):
         self.L1 = L1
         self.L2 = L2
         self.L3 = L3
 
-    def solve(self, theta):
-        if self.legtype == "LEFT":
-            return self.ForwardKinematic(theta, side=1)
+    def solve(
+        self, legtype: str, theta: Union[List[float], np.ndarray]
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        if legtype == "LEFT":
+            return self._forward_kinematic(theta, side=1)
         else:
-            return self.ForwardKinematic(theta, side=-1)
+            return self._forward_kinematic(theta, side=-1)
 
-    def ForwardKinematic(self, theta, side):
-        """Posicion del los sistemas de coordenadas cinemática directa"""
+    def _forward_kinematic(
+        self, theta: Union[List[float], np.ndarray], side: int
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Posicion de los sistemas de coordenadas cinemática directa"""
 
         # Sistema de coordenadas S_1
         p1 = np.array(
@@ -37,7 +46,7 @@ class Forward:
             ]
         )
 
-        # Sistema de coordenadas S_2
+        # Sistema de coordenadas S_3
         p3 = np.array(
             [
                 (-self.L2 * np.sin(theta[1]) - self.L3 * np.sin(theta[1] + theta[2])),
@@ -55,3 +64,4 @@ class Forward:
         )
 
         return p1, p2, p3
+

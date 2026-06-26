@@ -1,6 +1,7 @@
 import numpy as np
 
-from src.kinematics.Inverse import Inverse
+from src.kinematics.inverse import Inverse
+from src.kinematics.forward import Forward
 from src.kinematics.LieAlgebra import (
     RpToTrans,
     TransToRp,
@@ -11,9 +12,9 @@ from src.kinematics.LieAlgebra import (
 class RobotModel:
     def __init__(
         self,
-        L1 = 0.0580,
+        L1 = 0.0615,
         L2 = 0.1080,
-        L3 = 0.1385,
+        L3 = 0.1302,
         hip_x = 0.192,
         hip_y = 0.078,
         foot_x = 0.192,
@@ -25,8 +26,9 @@ class RobotModel:
         self.L2 = L2
         self.L3 = L3
         
-        # Iniciar un objeto Inverse
-        self.inverse = Inverse()
+        # Iniciar objetos cinemáticos
+        self.inverse = Inverse(L1=self.L1, L2=self.L2, L3=self.L3)
+        self.forward = Forward(L1=self.L1, L2=self.L2, L3=self.L3)
         # Distancia entre caderas
         # Longitud
         self.hip_x = hip_x
@@ -160,13 +162,29 @@ class RobotModel:
             # print("LEG: {} \t HipToFoot: {}".format(key, p_hf))
 
             # Step 3, compute joint angles from T_hf for each leg
-            joint_angles[i, :] = self.inverse.solve(key, p_hf)
+            joint_angles[i, :] = self.inverse.solve(self.Legs[key], p_hf)
 
         # print("-----------------------------")
 
         return joint_angles
-    
-    
+
+    def FK(self, joint_angles: np.ndarray) -> dict:
+        """
+        Calcula la cinemática directa de las 4 patas del robot.
+        :param joint_angles: Un array de NumPy de forma (4, 3) con los ángulos articulares.
+                             El orden de las filas debe ser FL, FR, RL, RR.
+        :return: Diccionario con las posiciones del pie (p3) respecto a la cadera, indexado por pata.
+        """
+        HipToFoot = {}
+        keys = ["FL", "FR", "RL", "RR"]
+        
+        for i, key in enumerate(keys):
+            theta = joint_angles[i, :]
+            _, _, p3 = self.forward.solve(self.Legs[key], theta)
+            HipToFoot[key] = p3
+            
+        return HipToFoot
+
 
 if __name__ == '__main__':
     print("Probando HipToFoot")
@@ -178,6 +196,13 @@ if __name__ == '__main__':
     for clave, valor in p_hfs.items():
         print(clave)
         print(valor)
+    
     angles = robot.IK(rpy, pos, T_bf)
+    print("\nÁngulos generados por IK:")
     print(angles)
+    
+    print("\nProbando FK desde esos ángulos...")
+    fk_positions = robot.FK(angles)
+    for clave, valor in fk_positions.items():
+        print(f"Pata {clave} posición calculada de pie: {valor}")
     

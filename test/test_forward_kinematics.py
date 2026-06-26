@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from matplotlib.widgets import Slider
 
-from src.kinematics.Forward import Forward
+from src.kinematics.forward import Forward
 
 # Iniciamos el objeto
 fk = Forward("LEFT")
