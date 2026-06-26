@@ -2,7 +2,7 @@ import numpy as np
 
 from src.kinematics.inverse import Inverse
 from src.kinematics.forward import Forward
-from src.kinematics.LieAlgebra import (
+from src.kinematics.lib_algebra import (
     RpToTrans,
     TransToRp,
     TransInv,
