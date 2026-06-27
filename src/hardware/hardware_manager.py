@@ -61,17 +61,20 @@ class HardwareManager:
         """
         servo = self.repository.select_servo(name)
 
-        # 1. Aplicar inversion de direccion (asumimos un rango base de 0 a 180)
-        angle = (180.0 - angle) if servo.invert_direction else angle
+        # 1. Aplicar angulo cero de calibracion segun resolucion cinematica inversa.
+        calib = self.config.hip_zero_angle if "hip" in name.split("_") else self.config.knee_zero_angle
+        print(f"Calibracion: {name}, {calib}")
         
-        # 2. Aplicar angulo cero de calibracion segun resolucion cinematica inversa.
-        angle += self.config.hip_zero_angle if "hip" in name.split("_") else self.config.knee_zero_angle
-
-        # 3. Aplicar offset de calibracion
-        angle += servo.offset
+        # 2. Aplicar offset de calibracion
+        offset = servo.offset
+        base = calib + angle + offset
+        
+        # 3. Aplicar inversion de direccion (asumimos un rango base de 0 a 180)
+        angle = 180.0 - base if servo.invert_direction else base
 
         # 4. Limitar angulo entre 0 y 180 grados de forma segura
         angle = max(0.0, min(180.0, angle))
+        print(f"limitar angulo: {name}, {angle}")
 
         # 5. Mapear a rango de pulso (min_pulse a max_pulse)
         pulse_range = servo.max_pulse - servo.min_pulse
