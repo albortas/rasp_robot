@@ -63,7 +63,7 @@ class HardwareManager:
 
         # 1. Aplicar angulo cero de calibracion segun resolucion cinematica inversa.
         calib = self.config.hip_zero_angle if "hip" in name.split("_") else self.config.knee_zero_angle
-        print(f"Calibracion: {name}, {calib}")
+        # print(f"Calibracion: {name}, {calib}")
         
         # 2. Aplicar offset de calibracion
         offset = servo.offset

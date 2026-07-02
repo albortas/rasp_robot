@@ -1,6 +1,6 @@
 import time
 
-# import numpy as np
+import numpy as np
 
 from src.control.control_interface import ControlInterface
 from src.controller.PS4Controller import PS4Controller
@@ -49,6 +49,7 @@ def main():
             # === Ejecutar segun el modo actual
             if current_mode == NEUTRAL:
                 angles = control.get_neutral_angles()
+                print(np.round(np.degrees(angles), 2))
                 control.send_joint_angles(angles)
             elif current_mode == STATIC_POSTURE:
                 roll = -axes[0] * MAX_ROLL
@@ -64,3 +65,6 @@ def main():
         print("Volviendo a neutral...")
         control.shutdown()
         print("¡Sistema detenido!")
+
+if __name__ == "__main__":
+    main()

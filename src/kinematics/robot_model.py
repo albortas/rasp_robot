@@ -188,7 +188,7 @@ class RobotModel:
 
 if __name__ == '__main__':
     print("Probando HipToFoot")
-    rpy = [np.pi/4, 0, 0]
+    rpy = [0, 0, 0]
     pos = [0, 0 , 0]
     robot = RobotModel()
     T_bf = robot.WorldToFoot
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     
     angles = robot.IK(rpy, pos, T_bf)
     print("\nÁngulos generados por IK:")
-    print(angles)
+    print(np.round(np.degrees(angles), 2))
     
     print("\nProbando FK desde esos ángulos...")
     fk_positions = robot.FK(angles)
