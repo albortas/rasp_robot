@@ -49,7 +49,7 @@ min_pulse = 500
 max_pulse = 2600
 rest_angle = 0
 offset = -3
-invert_direction = true
+invert_direction = false
 
 [servos.FR_knee]
 pca9685 = 1
