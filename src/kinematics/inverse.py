@@ -63,8 +63,8 @@ class Inverse:
             log.warning("SQRT NEGATIVO")
             AG_cuadrado = 0.0
         AG = np.sqrt(AG_cuadrado)
-        num = -(z / y + AG / self.L1)
-        den = 1 - (z / y) * (AG / self.L1)
+        num = -(z / y + AG / (side * self.L1))
+        den = 1 - (z / y) * (AG / (side * self.L1))
         theta1 = np.arctan(num / den)
         theta3 = np.arccos(D)
         theta2 = np.arctan2(x, AG) - np.arctan2(
