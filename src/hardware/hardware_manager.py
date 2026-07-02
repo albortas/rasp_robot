@@ -74,7 +74,7 @@ class HardwareManager:
 
         # 4. Limitar angulo entre 0 y 180 grados de forma segura
         angle = max(0.0, min(180.0, angle))
-        print(f"limitar angulo: {name}, {angle}")
+        # print(f"limitar angulo: {name}, {angle}")
 
         # 5. Mapear a rango de pulso (min_pulse a max_pulse)
         pulse_range = servo.max_pulse - servo.min_pulse
