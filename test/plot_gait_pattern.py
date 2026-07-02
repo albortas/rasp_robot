@@ -105,8 +105,7 @@ def plot_phase_vs_speed(gait_class, speeds, Tswing=0.25, total_time=2.0):
         # Suponemos Lspan = 0.17 m (valor usado en el paper)
         Lspan = 0.17
         Tstance = 2 * Lspan / vd
-        Tstride = Tstance + Tswing
-
+        
         gait = gait_class(dSref=[0.0, 0.5, 0.5, 0.0], Tswing=Tswing)
         gait.ref_idx = 0
 
