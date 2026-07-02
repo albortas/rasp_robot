@@ -1,19 +1,23 @@
 import numpy as np
 import copy
-from src.kinematics.RobotModel import RobotModel
-from src.hardware.ServoController import ServoController
+from src.kinematics.robot_model import RobotModel
+from src.utils.servo_repository import ServoRepository
+from src.utils.toml_loader import TomlLoader
+from src.hardware.hardware_manager import HardwareManager
 
 class ControlInterface:
     def __init__(self):
         self.robot_model = RobotModel()
-        self.servo_controller = ServoController()
+        self.repository = ServoRepository()
+        self.loader = TomlLoader(self.repository)
+        self.hardware = HardwareManager(self.loader, self.repository)
         self.T_bf_base = copy.deepcopy(self.robot_model.WorldToFoot)
         self.leg_order = ["FL", "FR", "RL", "RR"]
 
     def send_joint_angles(self, joint_angles_rad):
         angles_deg = np.degrees(joint_angles_rad)
         for i, leg in enumerate(self.leg_order):
-            self.servo_controller.set_leg_angles(leg, angles_deg[i])
+            self.hardware.set_leg_angles(leg, angles_deg[i])
         
     def get_neutral_angles(self):
         return self.robot_model.IK(
@@ -43,4 +47,4 @@ class ControlInterface:
         
     def shutdown(self):
         self.go_to_neutral()
-        self.servo_controller.deinit()
+        self.hardware.deinit()
