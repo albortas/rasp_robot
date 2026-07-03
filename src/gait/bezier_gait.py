@@ -340,7 +340,7 @@ class BazierGait:
         coord = np.array([
             X_delta_lin + X_delta_rot,
             Y_delta_lin + Y_delta_rot,
-            Z_delta_lin + Z_delta_rot,
+            Z_delta_lin + Z_delta_rot
             ])
 
         self.Pre_fxyz[index] = coord
@@ -376,7 +376,7 @@ class BazierGait:
                            vel,
                            T_bf_,
                            T_bf_curr,
-                           cleareance_height = 0.06,
+                           clearance_height = 0.06,
                            penetration_depth = 0.01,
                            contacts = [0, 0, 0, 0],
                            dt = None):
@@ -439,7 +439,7 @@ class BazierGait:
 
             if Tstance > 0.0:
                 step_coord = self.GetFootStep(L, LateralFraction, YawRate,
-                                              cleareance_height,
+                                              clearance_height,
                                               penetration_depth,
                                               Tstance, p_bf, i, key)
             else:
