@@ -1,13 +1,13 @@
 import time
 
-import numpy as np
-
 from src.control.control_interface import ControlInterface
+from src.control.gait_inteface import GaitInteface
 from src.controller.PS4Controller import PS4Controller
 
 # Estados
 NEUTRAL = 0
 STATIC_POSTURE = 1
+GAIT_MODE = 2
 
 
 def main():
@@ -16,6 +16,7 @@ def main():
     # Inicializar módulos
     ps4 = PS4Controller()
     control = ControlInterface()
+    gait = GaitInteface()
 
     # Limites
     MAX_ROLL = 0.4
@@ -45,12 +46,23 @@ def main():
                 else:
                     current_mode = STATIC_POSTURE
                     print("Modo: POSTURA ESTATICA (L1 para salir)")
+            
+            # Toggle: R1 (5) -> marcha
+            elif buttons[5] and not last_buttons[5]:
+                if current_mode == GAIT_MODE:
+                    current_mode = NEUTRAL
+                    control.go_to_neutral()
+                    print("Modo: NEUTRAL")
+                else:
+                    current_mode = GAIT_MODE
+                    print("Modo: MARCHA (R1 para salir)")
                     
             # === Ejecutar segun el modo actual
             if current_mode == NEUTRAL:
                 angles = control.get_neutral_angles()
                 # print(np.round(np.degrees(angles), 2))
                 control.send_joint_angles(angles)
+                
             elif current_mode == STATIC_POSTURE:
                 roll = -axes[0] * MAX_ROLL
                 pitch = axes[1] * MAX_PITCH
@@ -59,6 +71,20 @@ def main():
                 control.send_joint_angles(angles)
                 if int(time.time() * 2) % 2 == 0:
                     print(f"[Postura] Roll: {roll:.2f}, Pitch: {pitch:.2f}, Yaw: {yaw:.2f}")
+            
+            elif current_mode == GAIT_MODE:
+                vel_x = -axes[1] * gait.max_vel_xy
+                vel_y = -axes[0] * gait.max_vel_xy
+                yaw_rate = axes[3] * gait.max_yaw_rate
+                T_bf = gait.compute_gait(vel_x, vel_y, yaw_rate)
+                angles = control.get_gait_angles(T_bf)
+                control.send_joint_angles(angles)
+                if int(time.time() * 2) % 2 == 0:
+                    print(f"[Marcha] vx: {vel_x:.2f}, vy: {vel_y:.2f}, yaw: {yaw_rate:.2f}")
+            
+            last_buttons = buttons[:]
+            time.sleep(0.02)
+                
     except KeyboardInterrupt:
         print("Apagando robot...")
     finally:
