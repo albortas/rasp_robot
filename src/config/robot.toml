@@ -66,7 +66,7 @@ channel = 0
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 0
-offset = 0
+offset = -6
 invert_direction = false
 
 [servos.RL_hip_pitch]
@@ -75,7 +75,7 @@ channel = 1
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 0
-offset = -4
+offset = 5
 invert_direction = true
 
 [servos.RL_knee]
@@ -84,7 +84,7 @@ channel = 2
 min_pulse = 500
 max_pulse = 2600
 rest_angle = -90
-offset = -4
+offset = 5
 invert_direction = true
 
 [servos.RR_hip_roll]
@@ -93,7 +93,7 @@ channel = 4
 min_pulse = 500
 max_pulse = 2500
 rest_angle = 0
-offset = 0
+offset = -11
 invert_direction = false
 
 [servos.RR_hip_pitch]
@@ -102,7 +102,7 @@ channel = 5
 min_pulse = 500
 max_pulse = 2600
 rest_angle = 0
-offset = -4
+offset = -5
 invert_direction = false
 
 [servos.RR_knee]
@@ -111,5 +111,5 @@ channel = 6
 min_pulse = 500
 max_pulse = 2600
 rest_angle = -90
-offset = 3
+offset = -6
 invert_direction = false
