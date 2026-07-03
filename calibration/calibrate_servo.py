@@ -28,7 +28,7 @@ class CalibratorApp:
                 log.error(f"Error inicializando Hardware: {e}")
 
         # Forzar uso de PCA 1 para calibracion
-        self.configurator.update_channels(1)
+        self.configurator.update_channels(2)
 
         # Agrupar por patas
         self._leg_map()

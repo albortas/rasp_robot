@@ -90,5 +90,5 @@ if __name__ == "__main__":
     repo = ServoRepository()
     loader = TomlLoader(repo)
     ch_cfg = ChannelsConfigurator(repo)
-    ch_cfg.update_channels()
+    ch_cfg.update_channels(2)
     loader.synchronize()

@@ -18,9 +18,9 @@ def main():
     control = ControlInterface()
 
     # Limites
-    MAX_ROLL = 0.5
-    MAX_PITCH = 0.5
-    MAX_YAW = 0.5
+    MAX_ROLL = 0.4
+    MAX_PITCH = 0.4
+    MAX_YAW = 0.4
 
     # Estado Inicial
     current_mode = NEUTRAL
@@ -49,7 +49,7 @@ def main():
             # === Ejecutar segun el modo actual
             if current_mode == NEUTRAL:
                 angles = control.get_neutral_angles()
-                print(np.round(np.degrees(angles), 2))
+                # print(np.round(np.degrees(angles), 2))
                 control.send_joint_angles(angles)
             elif current_mode == STATIC_POSTURE:
                 roll = -axes[0] * MAX_ROLL
@@ -59,8 +59,8 @@ def main():
                 control.send_joint_angles(angles)
                 if int(time.time() * 2) % 2 == 0:
                     print(f"[Postura] Roll: {roll:.2f}, Pitch: {pitch:.2f}, Yaw: {yaw:.2f}")
-    except Exception as e:
-        print(f"Error: {e}")
+    except KeyboardInterrupt:
+        print("Apagando robot...")
     finally:
         print("Volviendo a neutral...")
         control.shutdown()
