@@ -260,7 +260,7 @@ class BazierGait:
         g_xyz = self.Pre_fxyz[index] - np.array([T_bf[0], T_bf[1], T_bf[2]])
 
         # Modulamos la magnitud para mantener el trazo del circulo
-        g_map = np.sqrt(g_xyz[0] ** 2 + g_xyz ** 2)
+        g_map = np.sqrt(g_xyz[0] ** 2 + g_xyz[1] ** 2)
         th_mod = np.arctan2(g_map, default_body_to_foot_magnitude)
 
         # Angulo corregido por el pie de la rotacion
