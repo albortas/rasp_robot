@@ -114,24 +114,12 @@ class RobotModel:
             # bh -> body to hip
             T_bh = T_bw @ T_wh
             
-            # METODO ADICICION DE VECTORES
-            # # bf -> body to foot
-            _, p_bf = TransToRp(T_bf[key])
-            
-            _, p_bh = TransToRp(T_bh)
-            p_hf0 = p_bf - p_bh
-
-            # METODO DE MULTIPLICACION DE TRANSFORMADA
-            # hb -> hip to body
+            # HB -> hip to body
             T_hb = TransInv(T_bh)
             T_hf = T_hb @ T_bf[key]
-            _, p_hf1 = TransToRp(T_hf)
+            _, p_hf = TransToRp(T_hf)
             
-            # Los dos metodos son iguales
-            if p_hf0.all() != p_hf1.all():
-                print(f"{p_hf0} no es igual {p_hf1}")
-
-            HipToFoot_Dic[key] = p_hf1
+            HipToFoot_Dic[key] = p_hf
         
         return HipToFoot_Dic
     

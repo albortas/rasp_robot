@@ -31,9 +31,22 @@ def main():
     # Para detectar flanco ascendete (presion unica)
     last_buttons = [False] * 14
 
+    # Variables de control
+    last_print_time = time.time()
+    PRINT_INTERVAL = 0.5  # segundos
+
     try:
         while True:
-            state = ps4.get_joystick_state()
+            try:
+                state = ps4.get_joystick_state()
+            except Exception as e:
+                if current_mode != NEUTRAL:
+                    print(f"Error con el mando PS4: {e}. Volviendo a NEUTRAL por seguridad.")
+                    current_mode = NEUTRAL
+                    control.go_to_neutral()
+                time.sleep(1.0)
+                continue
+
             axes = state["axes"]
             buttons = state["buttons"]
 
@@ -57,10 +70,13 @@ def main():
                     current_mode = GAIT_MODE
                     print("Modo: MARCHA (R1 para salir)")
                     
+            # Comprobar si es momento de imprimir
+            current_time = time.time()
+            should_print = (current_time - last_print_time) >= PRINT_INTERVAL
+
             # === Ejecutar segun el modo actual
             if current_mode == NEUTRAL:
                 angles = control.get_neutral_angles()
-                # print(np.round(np.degrees(angles), 2))
                 control.send_joint_angles(angles)
                 
             elif current_mode == STATIC_POSTURE:
@@ -69,8 +85,9 @@ def main():
                 yaw = axes[3] * MAX_YAW
                 angles = control.get_posture_angles(roll, pitch, yaw)
                 control.send_joint_angles(angles)
-                if int(time.time() * 2) % 2 == 0:
+                if should_print:
                     print(f"[Postura] Roll: {roll:.2f}, Pitch: {pitch:.2f}, Yaw: {yaw:.2f}")
+                    last_print_time = current_time
             
             elif current_mode == GAIT_MODE:
                 vel_x = -axes[1] * gait.max_vel_xy
@@ -79,8 +96,9 @@ def main():
                 T_bf = gait.compute_gait(vel_x, vel_y, yaw_rate)
                 angles = control.get_gait_angles(T_bf)
                 control.send_joint_angles(angles)
-                if int(time.time() * 2) % 2 == 0:
+                if should_print:
                     print(f"[Marcha] vx: {vel_x:.2f}, vy: {vel_y:.2f}, yaw: {yaw_rate:.2f}")
+                    last_print_time = current_time
             
             last_buttons = buttons[:]
             time.sleep(0.02)

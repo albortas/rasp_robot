@@ -6,7 +6,7 @@ from src.kinematics.robot_model import RobotModel
 
 
 class GaitInteface:
-    def __init__(self, Tswing=0.2, dt=0.02) -> None:
+    def __init__(self, Tswing=0.25, dt=0.02) -> None:
         self.gait_gen = BazierGait(Tswing=Tswing, dt=dt)
         self.robot_model = RobotModel()
         self.T_bf_base = copy.deepcopy(self.robot_model.WorldToFoot)
@@ -19,9 +19,16 @@ class GaitInteface:
         self.penetration_depth = 0.005
 
     def compute_gait(self, vel_x, vel_y, yaw_rate):
-        L = np.hypot(vel_x, vel_y) / 2.0
-        LateralFraction = np.arctan2(vel_x, vel_y) if L > 0.01 else 0.0
         vel = np.hypot(vel_x, vel_y)
+        
+        # El tiempo de apoyo deseado (Tstance). Si era L = vel/2.0, estabas forzando Tstance = 1.0s 
+        # lo cual es muy lento y daba una zancada muy grande. Lo ajustamos a un factor de Tswing.
+        Tstance_desired = self.gait_gen.Tswing * 1.5 
+        
+        # L es la mitad de la zancada. Zancada = vel * Tstance
+        L = (vel * Tstance_desired) / 2.0
+        
+        LateralFraction = np.arctan2(vel_x, vel_y) if L > 0.001 else 0.0
         return self.gait_gen.GenerateTrayectory(
             L=L,
             LateralFraction=LateralFraction,

@@ -250,7 +250,7 @@ class BazierGait:
         """
 
         # Magnitud del pie según el tipo de pata
-        default_body_to_foot_magnitude = np.sqrt(T_bf[0] * 2 + T_bf[1] * 2)
+        default_body_to_foot_magnitude = np.sqrt(T_bf[0] ** 2 + T_bf[1] ** 2)
 
         # Angulo de rotacion segun el tipo de pata
         default_body_to_foot_direction = np.arctan2(T_bf[1], T_bf[0])
