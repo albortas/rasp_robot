@@ -9,7 +9,6 @@ NEUTRAL = 0
 STATIC_POSTURE = 1
 GAIT_MODE = 2
 
-
 def main():
     print("Iniciando control con toggle (L1 = postura)")
 
@@ -49,6 +48,11 @@ def main():
 
             axes = state["axes"]
             buttons = state["buttons"]
+            
+            # ¡Emergencia! (boton Options = 9)
+            if buttons[9] and not last_buttons[9]:
+                time.sleep(0.5)
+                break
 
             # Toggle: L1 (4) -> postura estatica
             if buttons[4] and not last_buttons[4]:
