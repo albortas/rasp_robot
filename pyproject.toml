@@ -32,6 +32,7 @@ rpi = [
     "adafruit-circuitpython-pca9685",
     "adafruit-circuitpython-motor",
     "rpi-lgpio",
+    "gpiozero"
 ]
 
 [tool.setuptools.packages.find]
