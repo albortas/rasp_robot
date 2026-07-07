@@ -1,118 +1,132 @@
 import time
+from enum import IntEnum
 
 from src.control.control_interface import ControlInterface
 from src.control.gait_inteface import GaitInteface
 from src.controller.PS4Controller import PS4Controller
+from src.hardware.servos_power_controller import ServosPowerController
 
-# Estados
-NEUTRAL = 0
-STATIC_POSTURE = 1
-GAIT_MODE = 2
 
-def main():
-    print("Iniciando control con toggle (L1 = postura)")
+class RobotMode(IntEnum):
+    NEUTRAL = 0
+    STATIC_POSTURE = 1
+    GAIT_MODE = 2
 
-    # Inicializar módulos
-    ps4 = PS4Controller()
-    control = ControlInterface()
-    gait = GaitInteface()
 
-    # Limites
+class Robot:
     MAX_ROLL = 0.4
     MAX_PITCH = 0.4
     MAX_YAW = 0.4
 
-    # Estado Inicial
-    current_mode = NEUTRAL
-    control.go_to_neutral()
-    print("Modo: NEUTRAL")
+    PRINT_INTERVAL = 0.5
+    LOOP_PERIOD = 0.02
 
-    # Para detectar flanco ascendete (presion unica)
-    last_buttons = [False] * 14
+    def __init__(self):
+        self.ps4 = PS4Controller()
+        self.control = ControlInterface()
+        self.gait = GaitInteface()
+        self.power_controller = ServosPowerController()
+        self.current_mode = RobotMode.NEUTRAL
+        self._last_print_time = time.time()
 
-    # Variables de control
-    last_print_time = time.time()
-    PRINT_INTERVAL = 0.5  # segundos
+        print("Iniciando control robot")
+        self.control.go_to_neutral()
+        print("Modo: NEUTRAL")
+        self._run()
 
-    try:
-        while True:
-            try:
-                state = ps4.get_joystick_state()
-            except Exception as e:
-                if current_mode != NEUTRAL:
-                    print(f"Error con el mando PS4: {e}. Volviendo a NEUTRAL por seguridad.")
-                    current_mode = NEUTRAL
-                    control.go_to_neutral()
-                time.sleep(1.0)
-                continue
+    def _run(self):
+        last_buttons: tuple[bool, ...] = (False,) * 14
 
-            axes = state["axes"]
-            buttons = state["buttons"]
-            
-            # ¡Emergencia! (boton Options = 9)
-            if buttons[9] and not last_buttons[9]:
-                time.sleep(0.5)
-                break
+        try:
+            while True:
+                try:
+                    state = self.ps4.get_joystick_state()
+                except Exception as e:
+                    if self.current_mode != RobotMode.NEUTRAL:
+                        print(f"Error con el mando PS4: {e}. Volviendo a NEUTRAL por seguridad")
+                        self._switch_mode(RobotMode.NEUTRAL)
+                    time.sleep(1.0)
+                    continue
 
-            # Toggle: L1 (4) -> postura estatica
-            if buttons[4] and not last_buttons[4]:
-                if current_mode == STATIC_POSTURE:
-                    current_mode = NEUTRAL
-                    control.go_to_neutral()
-                    print("Modo: Neutral")
+                axes = state["axes"]
+                buttons = tuple(state["buttons"])
+
+                if self._rising_edge(buttons, last_buttons, 9):
+                    self.power_controller.toggle()
+                    self._switch_mode(RobotMode.NEUTRAL)
+
+                if self.power_controller.state:
+                    self._handle_mode_buttons(buttons, last_buttons)
+                    self._execute_mode(axes)
+                    last_buttons = buttons
+                    time.sleep(self.LOOP_PERIOD)
                 else:
-                    current_mode = STATIC_POSTURE
-                    print("Modo: POSTURA ESTATICA (L1 para salir)")
-            
-            # Toggle: R1 (5) -> marcha
-            elif buttons[5] and not last_buttons[5]:
-                if current_mode == GAIT_MODE:
-                    current_mode = NEUTRAL
-                    control.go_to_neutral()
-                    print("Modo: NEUTRAL")
-                else:
-                    current_mode = GAIT_MODE
-                    print("Modo: MARCHA (R1 para salir)")
-                    
-            # Comprobar si es momento de imprimir
-            current_time = time.time()
-            should_print = (current_time - last_print_time) >= PRINT_INTERVAL
+                    print("!Habilitar el control de potencia de los servos!")
+                    print("Presiona Options")
+                    time.sleep(1)
 
-            # === Ejecutar segun el modo actual
-            if current_mode == NEUTRAL:
-                angles = control.get_neutral_angles()
-                control.send_joint_angles(angles)
-                
-            elif current_mode == STATIC_POSTURE:
-                roll = -axes[0] * MAX_ROLL
-                pitch = axes[1] * MAX_PITCH
-                yaw = axes[3] * MAX_YAW
-                angles = control.get_posture_angles(roll, pitch, yaw)
-                control.send_joint_angles(angles)
-                if should_print:
-                    print(f"[Postura] Roll: {roll:.2f}, Pitch: {pitch:.2f}, Yaw: {yaw:.2f}")
-                    last_print_time = current_time
-            
-            elif current_mode == GAIT_MODE:
-                vel_x = -axes[1] * gait.max_vel_xy
-                vel_y = -axes[0] * gait.max_vel_xy
-                yaw_rate = axes[3] * gait.max_yaw_rate
-                T_bf = gait.compute_gait(vel_x, vel_y, yaw_rate)
-                angles = control.get_gait_angles(T_bf)
-                control.send_joint_angles(angles)
-                if should_print:
-                    print(f"[Marcha] vx: {vel_x:.2f}, vy: {vel_y:.2f}, yaw: {yaw_rate:.2f}")
-                    last_print_time = current_time
-            
-            last_buttons = buttons[:]
-            time.sleep(0.02)
-                
-    except KeyboardInterrupt:
-        print("Apagando robot...")
-    finally:
-        print("Volviendo a neutral...")
-        control.shutdown()
-        print("¡Sistema detenido!")
+        except KeyboardInterrupt:
+            print("Apagando robot...")
+        finally:
+            print("Volviendo a neutral...")
+            self.control.shutdown()
+            print("Sistema detenido!")
+
+    def _rising_edge(self, buttons: tuple[bool, ...], last: tuple[bool, ...], idx: int) -> bool:
+        return buttons[idx] and not last[idx]
+
+    def _switch_mode(self, mode: RobotMode):
+        self.current_mode = mode
+        if mode == RobotMode.NEUTRAL:
+            self.control.go_to_neutral()
+
+    def _handle_mode_buttons(self, buttons: tuple[bool, ...], last: tuple[bool, ...]):
+        # L0 (4) -> postura estatica
+        if self._rising_edge(buttons, last, 4):
+            if self.current_mode == RobotMode.STATIC_POSTURE:
+                self._switch_mode(RobotMode.NEUTRAL)
+                print("Modo: NEUTRAL")
+            else:
+                self.current_mode = RobotMode.STATIC_POSTURE
+                print("Modo: POSTURA ESTATICA (L0 para salir)")
+
+        # R0 (5) -> marcha
+        elif self._rising_edge(buttons, last, 5):
+            if self.current_mode == RobotMode.GAIT_MODE:
+                self._switch_mode(RobotMode.NEUTRAL)
+                print("Modo: NEUTRAL")
+            else:
+                self.current_mode = RobotMode.GAIT_MODE
+                print("Modo: MARCHA (R0 para salir)")
+
+    def _execute_mode(self, axes: list[float]):
+        current_time = time.time()
+        should_print = (current_time - self._last_print_time) >= self.PRINT_INTERVAL
+
+        if self.current_mode == RobotMode.NEUTRAL:
+            self.control.go_to_neutral()
+
+        elif self.current_mode == RobotMode.STATIC_POSTURE:
+            roll = -axes[0] * self.MAX_ROLL
+            pitch = axes[-1] * self.MAX_PITCH
+            yaw = axes[3] * self.MAX_YAW
+            angles = self.control.get_posture_angles(roll, pitch, yaw)
+            self.control.send_joint_angles(angles)
+            if should_print:
+                print(f"[Postura] Roll: {roll:.1f}, Pitch: {pitch:.2f}, Yaw: {yaw:.2f}")
+                self._last_print_time = current_time
+
+        elif self.current_mode == RobotMode.GAIT_MODE:
+            vel_x = -axes[1] * self.gait.max_vel_xy
+            vel_y = -axes[0] * self.gait.max_vel_xy
+            yaw_rate = axes[3] * self.gait.max_yaw_rate
+            T_bf = self.gait.compute_gait(vel_x, vel_y, yaw_rate)
+            angles = self.control.get_gait_angles(T_bf)
+            self.control.send_joint_angles(angles)
+            if should_print:
+                print(f"[Marcha] vx: {vel_x:.1f}, vy: {vel_y:.2f}, yaw: {yaw_rate:.2f}")
+                self._last_print_time = current_time
+
 
 if __name__ == "__main__":
-    main()
+    Robot()

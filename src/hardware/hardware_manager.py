@@ -5,8 +5,6 @@ from adafruit_pca9685 import PCA9685
 from src.utils.logger import log
 from typing import TYPE_CHECKING
 
-from src.hardware.servos_power_controller import ServosPowerController
-
 if TYPE_CHECKING:
     from src.utils.servo_repository import ServoRepository
     from src.utils.toml_loader import TomlLoader
@@ -30,7 +28,6 @@ class HardwareManager:
     def __init__(self, loader: "TomlLoader", repository: "ServoRepository"):
         self.loader = loader
         self.repository = repository
-        self.power_controller = ServosPowerController()
         self.config = CalibrationParams()
         self.i2c = I2C(SCL, SDA)
         self.pcas = {}
@@ -62,10 +59,6 @@ class HardwareManager:
         Envia un angulo (grados) al servo fisico especificado por su nombre.
         Calcula el duty cycle manualmente basandose en min_pulse, max_pulse, offset e invert_direction.
         """
-        # Logica existe (solo si estan habilitados)
-        if not self.power_controller.state:
-            return
-        
         servo = self.repository.select_servo(name)
 
         # 1. Aplicar angulo cero de calibracion segun resolucion cinematica inversa.
@@ -133,7 +126,6 @@ class HardwareManager:
 
     def deinit(self):
         """Libera los recursos de las placas I2C y apaga los servos."""
-        self.power_controller.off()
         self.disable_all()
         for pca in self.pcas.values():
             pca.deinit()
