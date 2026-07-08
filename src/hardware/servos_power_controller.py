@@ -6,7 +6,7 @@ class ServosPowerController:
         log.debug("Iniciando control relay")
         self.relay = LED(17, active_high=True)
         self.state = False
-        self.abort()
+        self.off()
     
     def on(self):
         self.state = True
