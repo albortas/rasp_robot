@@ -118,7 +118,7 @@ class Robot:
 
         elif self.current_mode == RobotMode.GAIT_MODE:
             vel_x = -axes[1] * self.gait.max_vel_xy
-            vel_y = -axes[0] * self.gait.max_vel_xy
+            vel_y = axes[0] * self.gait.max_vel_xy
             yaw_rate = axes[3] * self.gait.max_yaw_rate
             T_bf = self.gait.compute_gait(vel_x, vel_y, yaw_rate)
             angles = self.control.get_gait_angles(T_bf)
