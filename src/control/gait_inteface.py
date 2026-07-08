@@ -13,22 +13,17 @@ class GaitInteface:
         self.dt = dt
 
         # Parametros ajustables
-        self.max_vel_xy = 0.15  # m/s
-        self.max_yaw_rate = 1.0  # rad/s
+        self.max_vel_xy = 0.07  # m/s
+        self.max_yaw_rate = 0.5  # rad/s
         self.clearance_height = 0.04
         self.penetration_depth = 0.005
 
     def compute_gait(self, vel_x, vel_y, yaw_rate):
-        vel = np.hypot(vel_x, vel_y)
         
-        # El tiempo de apoyo deseado (Tstance). Si era L = vel/2.0, estabas forzando Tstance = 1.0s 
-        # lo cual es muy lento y daba una zancada muy grande. Lo ajustamos a un factor de Tswing.
-        Tstance_desired = self.gait_gen.Tswing * 1.5 
+        L = np.hypot(vel_x, vel_y) / 2.0        
+        LateralFraction = np.arctan2(vel_y, vel_x) if L > 0.01 else 0.0
+        vel = np.hypot(vel_y, vel_x)
         
-        # L es la mitad de la zancada. Zancada = vel * Tstance
-        L = (vel * Tstance_desired) / 2.0
-        
-        LateralFraction = np.arctan2(vel_x, vel_y) if L > 0.001 else 0.0
         return self.gait_gen.GenerateTrayectory(
             L=L,
             LateralFraction=LateralFraction,

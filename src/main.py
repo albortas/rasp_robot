@@ -108,7 +108,7 @@ class Robot:
 
         elif self.current_mode == RobotMode.STATIC_POSTURE:
             roll = -axes[0] * self.MAX_ROLL
-            pitch = axes[-1] * self.MAX_PITCH
+            pitch = axes[1] * self.MAX_PITCH
             yaw = axes[3] * self.MAX_YAW
             angles = self.control.get_posture_angles(roll, pitch, yaw)
             self.control.send_joint_angles(angles)
