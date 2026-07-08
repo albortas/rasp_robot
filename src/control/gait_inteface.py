@@ -24,15 +24,7 @@ class GaitInteface:
         LateralFraction = np.arctan2(vel_y, vel_x) if L > 0.01 else 0.0
         vel = np.hypot(vel_y, vel_x)
         
-<<<<<<< HEAD
-        # L es la mitad de la zancada. Zancada = vel * Tstance
-        L = (vel * Tstance_desired) / 2.0
-        
-        LateralFraction = np.arctan2(vel_x, vel_y) if L > 0.001 else 0.0
         return self.gait_gen.GenerateTrajectory(
-=======
-        return self.gait_gen.GenerateTrayectory(
->>>>>>> d67849a2e861aaacbe9f0a2cab27efcf036e40d3
             L=L,
             LateralFraction=LateralFraction,
             YawRate=yaw_rate,
