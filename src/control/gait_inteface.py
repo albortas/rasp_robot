@@ -29,7 +29,7 @@ class GaitInteface:
         L = (vel * Tstance_desired) / 2.0
         
         LateralFraction = np.arctan2(vel_x, vel_y) if L > 0.001 else 0.0
-        return self.gait_gen.GenerateTrayectory(
+        return self.gait_gen.GenerateTrajectory(
             L=L,
             LateralFraction=LateralFraction,
             YawRate=yaw_rate,

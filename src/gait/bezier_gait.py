@@ -14,7 +14,7 @@ class BazierGait:
         self.dSref = dSref
         self.Tswing = Tswing  # Tiempo de SWING
         self.dt = dt    # Paso de tiempo
-        self.Pre_fxyz = [0.0, 0.0, 0.0, 0.0]
+        self.Prev_fxyz = [0.0, 0.0, 0.0, 0.0]
         # La pata de referencia es FL, siempre 0
         self.ref_idx = 0.0  # Pata de referencia
         # Tiempo transcurrido desde el último touchdown
@@ -29,7 +29,7 @@ class BazierGait:
         # Numero de puntos de control es n + 1 = 11 + 1 = 12
         self.NumControlPoints = 11
         # Almacena las fases de todas las patas
-        self.Phase = self.dSref
+        self.Phases = self.dSref
 
     def Get_ti(self, index, Tstride):
         """
@@ -139,7 +139,7 @@ class BazierGait:
             * np.power(1 - t, self.NumControlPoints - k)
         )
 
-    def BezierSwing(self, phase, L, LateralFraction, cleareance_height=0.04):
+    def BezierSwing(self, phase, L, LateralFraction, clearance_height=0.04):
         """
         Calcula las coordenadas del paso para el periode de Bezier (swing)
 
@@ -186,14 +186,14 @@ class BazierGait:
             [
                 0.0,  # Puntos de control doblemente superpuestos para velocidad
                 0.0,  # cero de elevacion Velocidad repecto a la cadera (Pts 0 y 1)
-                cleareance_height * 0.9,    # Tres puntos superpuestos par cambio de
-                cleareance_height * 0.9,    # direccion de fuerza durante la transicion de
-                cleareance_height * 0.9,    # seguimiento a protraccion (2, 3, 4)
-                cleareance_height * 0.9,    # Puntos doblemente superpuestos par cambio de
-                cleareance_height * 0.9,    # direccion de trayectoria durante protraccion (5 y 6)
-                cleareance_height * 1.1,    # Altura maxima de despeje en el cento de la trayectoria Pt. 7
-                cleareance_height * 1.1,    # Transicion suave de protraccion
-                cleareance_height * 1.1,    # a retraccion, dos puntos de control (8 y 9)
+                clearance_height * 0.9,    # Tres puntos superpuestos par cambio de
+                clearance_height * 0.9,    # direccion de fuerza durante la transicion de
+                clearance_height * 0.9,    # seguimiento a protraccion (2, 3, 4)
+                clearance_height * 0.9,    # Puntos doblemente superpuestos par cambio de
+                clearance_height * 0.9,    # direccion de trayectoria durante protraccion (5 y 6)
+                clearance_height * 1.1,    # Altura maxima de despeje en el cento de la trayectoria Pt. 7
+                clearance_height * 1.1,    # Transicion suave de protraccion
+                clearance_height * 1.1,    # a retraccion, dos puntos de control (8 y 9)
                 0.0,    # Puntos doblemente superpuestos para velocidad cero
                 0.0,    # en el contacto con el suelo repecto repecto a la cadera (10 y 11)
             ]
@@ -231,7 +231,7 @@ class BazierGait:
         stepY = step * Y_POLAR
         
         if L != 0.0:
-            stepZ = - penetration_depth * np.cos(np.pi * (stepX + stepY)) / ( 2.0 * L)
+            stepZ = - penetration_depth * np.cos((np.pi * (stepX + stepY)) / ( 2.0 * L))
         else:
             stepZ = 0.0
 
@@ -257,7 +257,7 @@ class BazierGait:
 
         # Coordenadas anteriores de la pata relativas a las coordenadas
         # predeterminadas
-        g_xyz = self.Pre_fxyz[index] - np.array([T_bf[0], T_bf[1], T_bf[2]])
+        g_xyz = self.Prev_fxyz[index] - np.array([T_bf[0], T_bf[1], T_bf[2]])
 
         # Modulamos la magnitud para mantener el trazo del circulo
         g_map = np.sqrt(g_xyz[0] ** 2 + g_xyz[1] ** 2)
@@ -273,7 +273,7 @@ class BazierGait:
 
         return phi_arc
 
-    def SwingStep(self, phase, L, LateralFraction, YawRate, cleareance_height, T_bf, key, index):
+    def SwingStep(self, phase, L, LateralFraction, YawRate, clearance_height, T_bf, key, index):
         """
         Calcula las coordenadas del paso para el periodo de Bezeir SWING
         usando una conbinacion de coordenadas de paso lineal y rotacional
@@ -295,11 +295,11 @@ class BazierGait:
 
         # Obtiene coordenadas del pie para el movimiento lineal
         X_delta_lin, Y_delta_lin, Z_delta_lin = self.BezierSwing(
-                phase, L, LateralFraction, cleareance_height
+                phase, L, LateralFraction, clearance_height
                 )
 
         X_delta_rot, Y_delta_rot, Z_delta_rot = self.BezierSwing(
-                phase, YawRate, phi_arc, cleareance_height
+                phase, YawRate, phi_arc, clearance_height
                 )
 
         coord = np.array([
@@ -308,7 +308,7 @@ class BazierGait:
             Z_delta_lin + Z_delta_rot
             ])
 
-        self.Pre_fxyz[index] = coord
+        self.Prev_fxyz[index] = coord
 
         return coord
 
@@ -343,11 +343,11 @@ class BazierGait:
             Z_delta_lin + Z_delta_rot
             ])
 
-        self.Pre_fxyz[index] = coord
+        self.Prev_fxyz[index] = coord
 
         return coord
 
-    def GetFootStep(self, L, LateralFraction, YawRate, cleareance_height,
+    def GetFootStep(self, L, LateralFraction, YawRate, clearance_height,
                     penetration_depth, Tstance, T_bf, index, key):
         """
         Calcula las coordenadas del paso ya sea en la porcion de Bezeir o
@@ -362,14 +362,14 @@ class BazierGait:
             stored_phase = phase
 
         # Solo para seguimiento
-        self.Phase[index] = stored_phase
+        self.Phases[index] = stored_phase
 
         if StanceSwing == self.STANCE:
             return self.StanceStep(phase, L, LateralFraction, YawRate, penetration_depth, T_bf, key, index)
         elif StanceSwing == self.SWING:
-            return self.SwingStep(phase, L, LateralFraction, YawRate, cleareance_height, T_bf, key, index)
+            return self.SwingStep(phase, L, LateralFraction, YawRate, clearance_height, T_bf, key, index)
 
-    def GenerateTrayectory(self,
+    def GenerateTrajectory(self,
                            L,
                            LateralFraction,
                            YawRate,
