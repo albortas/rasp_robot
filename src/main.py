@@ -2,7 +2,7 @@ import time
 from enum import IntEnum
 
 from src.control.control_interface import ControlInterface
-from src.control.gait_inteface import GaitInteface
+from src.control.gait_interface import GaitInteface
 from src.controller.PS4Controller import PS4Controller
 from src.hardware.servos_power_controller import ServosPowerController
 

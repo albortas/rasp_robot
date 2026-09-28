@@ -1,31 +1,26 @@
 import numpy as np
-
 from src.kinematics.inverse import Inverse
 from src.kinematics.forward import Forward
-from src.kinematics.lib_algebra import (
-    RpToTrans,
-    TransToRp,
-    TransInv,
-    RPY
-)
+from src.kinematics.lib_algebra import RpToTrans, TransToRp, TransInv, RPY
+
 
 class RobotModel:
     def __init__(
         self,
-        L1 = 0.0615,
-        L2 = 0.1080,
-        L3 = 0.1302,
-        hip_x = 0.192,
-        hip_y = 0.078,
-        foot_x = 0.192,
-        foot_y = 0.194,
-        height = 0.135
+        L1=0.0615,
+        L2=0.1080,
+        L3=0.1302,
+        hip_x=0.192,
+        hip_y=0.078,
+        foot_x=0.192,
+        foot_y=0.194,
+        height=0.135,
     ):
         # Parametros de la pierna
         self.L1 = L1
         self.L2 = L2
         self.L3 = L3
-        
+
         # Iniciar objetos cinemáticos
         self.inverse = Inverse(L1=self.L1, L2=self.L2, L3=self.L3)
         self.forward = Forward(L1=self.L1, L2=self.L2, L3=self.L3)
@@ -34,24 +29,24 @@ class RobotModel:
         self.hip_x = hip_x
         # Ancho
         self.hip_y = hip_y
-        
+
         # Distancia punto medio entre las caderas
-        self.m_hip_x = hip_x/2.0
-        self.m_hip_y = hip_y/2.0
-        
+        self.m_hip_x = hip_x / 2.0
+        self.m_hip_y = hip_y / 2.0
+
         # Distancia entre los pies
         # Longitud
         self.foot_x = foot_x
         # Ancho
         self.foot_y = foot_y
-        
+
         # Distancia punto medio entre los pies
-        self.m_foot_x = foot_x/2.0
-        self.m_foot_y = foot_y/2.0        
-        
+        self.m_foot_x = foot_x / 2.0
+        self.m_foot_y = foot_y / 2.0
+
         # Altura del cuerpo
         self.height = height
-        
+
         # Puntos desde el centroide del robot a caderas/hombros(hip/shoulder)
         ph_FL = np.array([self.m_hip_x, self.m_hip_y, 0])
         ph_FR = np.array([self.m_hip_x, -self.m_hip_y, 0])
@@ -68,20 +63,20 @@ class RobotModel:
         self.Legs = {"FL": "LEFT", "FR": "RIGHT", "RL": "LEFT", "RR": "RIGHT"}
 
         # Transfomaciones de la cadera en relación al centroide del cuerpo
-        Rwb = np.eye(3) # Matriz identidad
-        self.WorldToHip = {}    # Diccionario Vacio
+        Rwb = np.eye(3)  # Matriz identidad
+        self.WorldToHip = {}  # Diccionario Vacio
         self.WorldToHip["FL"] = RpToTrans(Rwb, ph_FL)
         self.WorldToHip["FR"] = RpToTrans(Rwb, ph_FR)
         self.WorldToHip["RL"] = RpToTrans(Rwb, ph_RL)
         self.WorldToHip["RR"] = RpToTrans(Rwb, ph_RR)
-        
-        # Transfomaciones de los pies en relación al centroide del cuerpo 
-        self.WorldToFoot = {}   # Diccionario Vacio
+
+        # Transfomaciones de los pies en relación al centroide del cuerpo
+        self.WorldToFoot = {}  # Diccionario Vacio
         self.WorldToFoot["FL"] = RpToTrans(Rwb, pf_FL)
         self.WorldToFoot["FR"] = RpToTrans(Rwb, pf_FR)
         self.WorldToFoot["RL"] = RpToTrans(Rwb, pf_RL)
         self.WorldToFoot["RR"] = RpToTrans(Rwb, pf_RR)
-        
+
     def HipToFoot(self, rpy, pos, T_bf):
         """
         Convierte la posición y orientación deseadas respecto a la posición
@@ -89,19 +84,19 @@ class RobotModel:
         en una transformación de cuerpo a cadera, que se utiliza para extraer
         y devolver el vector de cadera a pie
 
-        :param orn: Un 3x1 np.array([]) con ángulos Roll, Pitch, Yaw del Robot
+        :param rpy: Un 3x1 np.array([]) con ángulos Roll, Pitch, Yaw del Robot
         :param pos: Un 3x1 np.array([]) con las coordenada X, Y, Z del Robot
         :param T_bf: Diccionario de las transformaciones deseadas de cuerpo a pie
         :return: Vector de cadera a pie para cada pierna
         """
-        
+
         HipToFoot_Dic = {}
 
         # wb -> world to body
         R_wb, _ = TransToRp(RPY(rpy[0], rpy[1], rpy[2]))
         p_wb = pos
         T_wb = RpToTrans(R_wb, p_wb)
-        
+
         # wh -> world to hip
         for key, T_wh in self.WorldToHip.items():
             # ORDEN: FL, FR, RL, RR
@@ -113,16 +108,30 @@ class RobotModel:
 
             # bh -> body to hip
             T_bh = T_bw @ T_wh
-            
-            # HB -> hip to body
+
+            # Paso 2: obtener T_hf para cada pierna
+
+            # METODO DE ADICION DE VECTORES
+            _, p_bh = TransToRp(T_bh)
+            _, p_bf = TransToRp(T_bf[key])
+            p_hf0 = p_bf - p_bh
+
+            # METODO DE TRANSFORMACION
+            # hb -> hip to body
             T_hb = TransInv(T_bh)
-            T_hf = T_hb @ T_bf[key]
-            _, p_hf = TransToRp(T_hf)
             
+            T_hf = T_hb @ T_bf[key]
+            _, p_hf1 = TransToRp(T_hf)
+
+            if not np.array_equal(p_hf0, p_hf1):
+                print("NO ES IGUAL p_hf")
+
+            p_hf = p_hf1
+
             HipToFoot_Dic[key] = p_hf
-        
+
         return HipToFoot_Dic
-    
+
     def IK(self, rpy, pos, T_bf):
         """
         Utiliza HipToFoot() para convertir la posión y
@@ -165,32 +174,31 @@ class RobotModel:
         """
         HipToFoot = {}
         keys = ["FL", "FR", "RL", "RR"]
-        
+
         for i, key in enumerate(keys):
             theta = joint_angles[i, :]
             _, _, p3 = self.forward.solve(self.Legs[key], theta)
             HipToFoot[key] = p3
-            
+
         return HipToFoot
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Probando HipToFoot")
     rpy = [0, 0, 0]
-    pos = [0, 0 , 0]
+    pos = [0, 0, 0]
     robot = RobotModel()
     T_bf = robot.WorldToFoot
     p_hfs = robot.HipToFoot(rpy, pos, T_bf)
     for clave, valor in p_hfs.items():
         print(clave)
         print(valor)
-    
+
     angles = robot.IK(rpy, pos, T_bf)
     print("\nÁngulos generados por IK:")
     print(np.round(np.degrees(angles), 2))
-    
+
     print("\nProbando FK desde esos ángulos...")
     fk_positions = robot.FK(angles)
     for clave, valor in fk_positions.items():
         print(f"Pata {clave} posición calculada de pie: {valor}")
-    

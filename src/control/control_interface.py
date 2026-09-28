@@ -26,8 +26,8 @@ class ControlInterface:
             T_bf=self.T_bf_base
         )
     
-    def get_posture_angles(self, roll, pich, yaw):
-        rpy = np.array([roll, pich, yaw])
+    def get_posture_angles(self, roll, pitch, yaw):
+        rpy = np.array([roll, pitch, yaw])
         return self.robot_model.IK(
             rpy=rpy,
             pos=np.array([0, 0, 0]),

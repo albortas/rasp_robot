@@ -1,4 +1,3 @@
-from typing import Tuple, Optional
 import numpy as np
 
 from src.utils.logger import log
@@ -72,7 +71,7 @@ class Inverse:
         )
         return np.array([-theta1, -theta2, -theta3])
 
-    def get_range(self, z: float) -> Optional[Tuple[float, float]]:
+    def get_range(self, z: float):
         lower_limit_base = self.L1**2 + (self.L2 - self.L3) ** 2
         upper_limit_base = self.L1**2 + (self.L2 + self.L3) ** 2
 
