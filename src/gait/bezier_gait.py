@@ -9,7 +9,7 @@ class BazierGait:
     STANCE = 0  # Contacto con el suelo
     SWING = 1  # Pierna en el aire
 
-    def __init__(self, dSref=[0.0, 0.0, 0.5, 0.5], dt = 0.01, Tswing=0.2) -> None:
+    def __init__(self, dSref=[0.0, 0.5, 0.5, 0.0], dt = 0.01, Tswing=0.25) -> None:
         # Desfase de fase por pata: [FL, FR, RL, RR]
         self.dSref = dSref
         self.Tswing = Tswing  # Tiempo de SWING
@@ -18,7 +18,7 @@ class BazierGait:
         # La pata de referencia es FL, siempre 0
         self.ref_idx = 0.0  # Pata de referencia
         # Tiempo transcurrido desde el último touchdown
-        self.time_since_last_TD = 0.0
+        self.time_elapsed_TD = 0.0
         self.StanceSwing = self.STANCE  # Modo de la trayectoria
         # Valor de fase en la fase de swing [0, 1] de la pata de referencia
         self.SwRef = 0.0
@@ -33,11 +33,11 @@ class BazierGait:
 
     def Get_ti(self, index, Tstride):
         """
-        Obtiene en indice temporal para una pat indivual
+        Obtiene el indice temporal para una pierna indivual
         """
         if index == self.ref_idx:
             self.dSref[index] = 0.0
-        return self.time_since_last_TD - self.dSref[index] * Tstride
+        return self.time_elapsed_TD - self.dSref[index] * Tstride
 
     def GetPhase(self, index, Tstance, Tswing):
         """
@@ -101,11 +101,11 @@ class BazierGait:
         Incrementa el reloj interno del generador de marcha de Bézier.
         """
         self.CheckTouchDown()
-        self.time_since_last_TD = self.time - self.TD_time
-        if self.time_since_last_TD > Tstride:
-            self.time_since_last_TD = Tstride
-        elif self.time_since_last_TD < 0.0:
-            self.time_since_last_TD = 0.0
+        self.time_elapsed_TD = self.time - self.TD_time
+        if self.time_elapsed_TD > Tstride:
+            self.time_elapsed_TD = Tstride
+        elif self.time_elapsed_TD < 0.0:
+            self.time_elapsed_TD = 0.0
 
         # Incrementaremos el tiempo al final
         # en caso de que acabe de ocurrir un touchdown
@@ -115,7 +115,7 @@ class BazierGait:
         # REINICIAMOS TODO
         if Tstride < self.Tswing + dt:
             self.time = 0.0
-            self.time_since_last_TD = 0.0
+            self.time_elapsed_TD = 0.0
             self.TD_time = 0.0
             self.SwRef = 0.0
 
@@ -395,7 +395,7 @@ class BazierGait:
             L = 0.0
             self.TD = False
             self.time = 0.0
-            self.time_since_last_TD = 0.0
+            self.time_elapsed_TD = 0.0
 
         # Luego, obtenemos el tiempo desde el ultimo touchdown e Incrementaremos
         # el contador de Tiempo
@@ -410,7 +410,7 @@ class BazierGait:
             L = 0.0
             self.TD = False
             self.time = 0.0
-            self.time_since_last_TD = 0.0
+            self.time_elapsed_TD = 0.0
             YawRate = 0.0
         # NOTA: ES MUCHO MAS ESTABLE CON ESTO
         elif Tstance > 1.3 * self.Tswing:

@@ -27,7 +27,7 @@ class TestBazierGaitAgainstPaper(unittest.TestCase):
         self.gait.ref_idx = 0
 
     def test_equation_13_get_ti(self):
-        self.gait.time_since_last_TD = 0.3
+        self.gait.time_elapsed_TD = 0.3
         ti_FL = self.gait.Get_ti(0, self.Tstride)
         self.assertAlmostEqual(ti_FL, 0.3, places=6)
         ti_FR = self.gait.Get_ti(1, self.Tstride)
@@ -35,34 +35,34 @@ class TestBazierGaitAgainstPaper(unittest.TestCase):
         self.assertAlmostEqual(ti_FR, expected_ti_FR, places=6)
 
     def test_equation_15_stance_phase(self):
-        self.gait.time_since_last_TD = 0.25
+        self.gait.time_elapsed_TD = 0.25
         phase, state = self.gait.GetPhase(0, self.Tstance, self.Tswing)
         self.assertEqual(state, self.gait.STANCE)
         self.assertAlmostEqual(phase, 0.25 / self.Tstance, places=6)
 
     def test_equation_15_swing_negative_zone(self):
-        self.gait.time_since_last_TD = 0.2
+        self.gait.time_elapsed_TD = 0.2
         phase, state = self.gait.GetPhase(1, self.Tstance, self.Tswing)
         self.assertEqual(state, self.gait.SWING)
         expected_phase = (-0.175 + self.Tswing) / self.Tswing
         self.assertAlmostEqual(phase, expected_phase, places=6)
 
     def test_equation_15_swing_positive_zone(self):
-        self.gait.time_since_last_TD = 0.65
+        self.gait.time_elapsed_TD = 0.65
         phase, state = self.gait.GetPhase(0, self.Tstance, self.Tswing)
         self.assertEqual(state, self.gait.SWING)
         expected_phase = (0.65 - self.Tstance) / self.Tswing
         self.assertAlmostEqual(phase, expected_phase, places=6)
 
     def test_wrap_around_logic(self):
-        self.gait.time_since_last_TD = 0.1
+        self.gait.time_elapsed_TD = 0.1
         phase, state = self.gait.GetPhase(1, self.Tstance, self.Tswing)
         self.assertEqual(state, self.gait.STANCE)
         self.assertAlmostEqual(phase, 0.475 / self.Tstance, places=6)
 
     def test_touchdown_detection_sequence(self):
         # 1. Simulamos que la pata de referencia está al final del swing
-        self.gait.time_since_last_TD = self.Tstride  # ti = 0.75
+        self.gait.time_elapsed_TD = self.Tstride  # ti = 0.75
         phase, state = self.gait.GetPhase(0, self.Tstance, self.Tswing)
         self.assertAlmostEqual(phase, 1.0, places=6)
         self.assertTrue(self.gait.TD)
