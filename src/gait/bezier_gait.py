@@ -161,13 +161,13 @@ class BazierGait:
         STEP = np.array(
             [
                 -L,  # Punto de control 0, mitad de la longitud
-                -L
-                * 1.4,  # Punto de control 1, diferencia entre 1 y 0 = velocidad de elvacion en X
+                -L* 1.4,  # Punto de control 1, diferencia entre 1 y 0 = velocidad de elvacion en X
                 # Punto de control 2, 3, 4 superpuestos par el cambio de direccion despues de seguimiento
                 -L * 1.5,
                 -L * 1.5,
                 -L * 1.5,
                 0.0,  # Cambio de aceleracion durante la protraccion
+                0.0,
                 0.0,  # Por eso incluimos tre puntos de control superpuestos 5, 6 y 7
                 L * 1.5,  # Cambio de direccion para la retraccion de la pata
                 L * 1.5,  # en swing, requiere dos puntos superpuestos 8, 9.
