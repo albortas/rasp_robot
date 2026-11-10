@@ -152,5 +152,5 @@ if __name__ == "__main__":
     position = [0, 0.0615, -0.135]
     theta = np.degrees(ik.solve("RIGHT", position))
     log.info(theta)
-    ik.get_range(-0.15)
+    ik.get_range(-0.150)
 
