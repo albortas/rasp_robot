@@ -58,7 +58,7 @@ def plot_sawtooth_signals(time_axis, phases, states, Tstance, Tswing):
     # Lo haremos de forma sencilla: pintamos fondo transparente
 
     ax1.set_ylabel('Fase (S)')
-    ax1.set_title('Señales de fase generadas por el Gait Pattern Modulator\n'
+    ax1.set_title('Señales de fase generadas por el modulador de patrón de marcha\n'
                   f'Tst = {Tstance}s, Tsw = {Tswing}s')
     ax1.legend(loc='upper right')
     ax1.grid(True, alpha=0.3)
@@ -77,14 +77,14 @@ def plot_sawtooth_signals(time_axis, phases, states, Tstance, Tswing):
             start_t = time_axis[change_indices[j]]
             end_t = time_axis[change_indices[j+1]]
             state_val = states[change_indices[j], leg]
-            color = 'blue' if state_val == 0 else 'red'  # STANCE = azul, SWING = rojo
+            color = 'black' if state_val == 0 else 'gray'  # STANCE = negro, SWING = gris
             ax2.barh(y=leg, width=end_t - start_t, left=start_t,
                      height=0.8, color=color, alpha=0.6)
 
     ax2.set_yticks(range(4))
     ax2.set_yticklabels(labels)
     ax2.set_xlabel('Tiempo (s)')
-    ax2.set_title('Diagrama de apoyos (STANCE = azul, SWING = rojo)')
+    ax2.set_title('Diagrama de apoyos (STANCE = negro, SWING = gris)')
     ax2.set_xlim(time_axis[0], time_axis[-1])
     ax2.grid(True, alpha=0.2)
 
@@ -102,8 +102,8 @@ def plot_phase_vs_speed(gait_class, speeds, Tswing=0.25, total_time=2.0):
 
     for idx, vd in enumerate(speeds):
         # Calcular Tstance según la ecuación del paper (11): Tst = 2*Lspan / vd
-        # Suponemos Lspan = 0.17 m (valor usado en el paper)
-        Lspan = 0.17
+        # Valor calculado Lspan = 0.08 m
+        Lspan = 0.08
         Tstance = 2 * Lspan / vd
         
         gait = gait_class(dSref=[0.0, 0.5, 0.5, 0.0], Tswing=Tswing)
@@ -126,10 +126,10 @@ def plot_phase_vs_speed(gait_class, speeds, Tswing=0.25, total_time=2.0):
 
 if __name__ == '__main__':
     # --- Ejemplo 1: Trote estándar (como en el paper) ---
-    gait = BazierGait(dSref=[0.0, 0.5, 0.5, 0.0], Tswing=0.25)
+    gait = BazierGait(dSref=[0.0, 0.5, 0.5, 0.0], Tswing=0.2)
     gait.ref_idx = 0
 
-    Tstance = 0.5   # Tstance típico para ~2.5 m/s (con Lspan=0.17)
+    Tstance = 0.5   # Tstance típico para ~0.32 m/s (con Lspan=0.08)
     Tswing = 0.25
     total_time = 2.0
     dt = 0.001
@@ -138,8 +138,8 @@ if __name__ == '__main__':
     plot_sawtooth_signals(time_axis, phases, states, Tstance, Tswing)
 
     # --- Ejemplo 2: Comparación de señales a diferentes velocidades ---
-    speeds = [2.0, 3.0, 4.5, 6.0]  # m/s (Tstance = 2*0.17/v)
-    plot_phase_vs_speed(BazierGait, speeds, Tswing=0.25, total_time=2.0)
+    speeds = [0.5, 1.0, 1.5, 2.0]  # m/s (Tstance = 2*0.08/v)
+    plot_phase_vs_speed(BazierGait, speeds, Tswing=0.2, total_time=2.0)
 
     # --- Ejemplo 3: Transición de trote a galope (opcional) ---
     # Aquí puedes modificar dinámicamente dSref y graficar, como en la Fig.25

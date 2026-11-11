@@ -14,7 +14,7 @@ class RobotModel:
         hip_y=0.078,
         foot_x=0.192,
         foot_y=0.201,
-        height=0.150,
+        height=0.175,
     ):
         # Parametros de la pierna
         self.L1 = L1
