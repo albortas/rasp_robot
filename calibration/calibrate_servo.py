@@ -15,20 +15,21 @@ except Exception as e:
 
 
 class CalibratorApp:
-    def __init__(self):
+    def __init__(self, num_pcas: int = 1):
+        self.num_pcas = num_pcas
         self.repo = ServoRepository()
         self.loader = TomlLoader(self.repo)
         self.configurator = ChannelsConfigurator(self.repo)
-
+        
+        # Reasignar canales para hardware
+        self.configurator.update_channels(self.num_pcas)
+        
         self.hw = None
         if HARDWARE_AVAILABLE:
             try:
                 self.hw = HardwareManager(self.loader, self.repo)
             except Exception as e:
                 log.error(f"Error inicializando Hardware: {e}")
-
-        # Forzar uso de PCA 1 para calibracion
-        self.configurator.update_channels(2)
 
         # Agrupar por patas
         self._leg_map()
@@ -58,7 +59,7 @@ class CalibratorApp:
             )
         else:
             title += "\n[MODO REAL - Hardware I2C activo]"
-        title += "\n(Todos los canales han sido forzados temporalmente a PCA 1 para calibracion)"
+        title += f"\n(Canales reasignados a {self.num_pcas} PCA9585 para calibracion)"
 
         options = self.legs + ["Salir"]
 
@@ -180,5 +181,7 @@ class CalibratorApp:
 
 
 if __name__ == "__main__":
-    app = CalibratorApp()
-    app.main()
+    import sys
+    pcas = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    CalibratorApp(num_pcas=pcas).main()
+    
