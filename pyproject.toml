@@ -19,6 +19,7 @@ dependencies = [
     "pygame",
     "pick",
     "tomli_w",
+    "flask",
 ]
 
 # AQUI ESTA LA MAGIA: Dependencias opcionales

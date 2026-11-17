@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calibracion de servos · Robodelta</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="title">
+      <h1>Calibracion de servos</h1>
+      <p class="subtitle">Ajusta offset, inversion y posicion de reposo de cada articulacion.</p>
+    </div>
+    <div class="status">
+      <span id="mode-badge" class="badge">conectando…</span>
+      <span id="pcas-info" class="muted"></span>
+      <span id="dirty" class="dirty hidden">cambios sin guardar</span>
+    </div>
+    <div class="actions">
+      <button id="btn-rest-pose" class="btn">Pose de reposo</button>
+      <button id="btn-save" class="btn primary">Guardar en robot.toml</button>
+      <button id="btn-disable" class="btn danger">Liberar servos</button>
+    </div>
+  </header>
+
+  <main id="legs" class="legs"></main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
