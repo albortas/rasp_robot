@@ -40,12 +40,12 @@ function servoByName(name) {
 function updateStatus() {
   const badge = $("#mode-badge");
   if (!state) {
-    badge.textContent = "sin conexion";
+    badge.textContent = "sin conexión";
     badge.className = "badge sim";
     return;
   }
   const real = state.hardware === "real";
-  badge.textContent = real ? "MODO REAL" : "MODO SIMULACION";
+  badge.textContent = real ? "MODO REAL" : "MODO SIMULACIÓN";
   badge.className = `badge ${real ? "real" : "sim"}`;
   badge.title = state.error || "";
   $("#pcas-info").textContent = `PCA9685: ${state.num_pcas}`;

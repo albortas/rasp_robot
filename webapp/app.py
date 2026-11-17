@@ -55,7 +55,7 @@ def _require(body: dict, key: str):
 def create_app(num_pcas: int = 1) -> Flask:
     app = Flask(__name__)
     app.config["SERVO_SERVICE"] = ServoService(num_pcas=num_pcas)
-
+    
     @app.get("/")
     def index():
         return render_template("index.html")
@@ -122,7 +122,7 @@ def main() -> None:
     app = create_app(num_pcas=args.pcas)
     log.info(f"Calibrador web en http://{args.host}:{args.port} (PCA: {args.pcas})")
     # use_reloader=False: con el reloader habria DOS procesos y dos HardwareManager.
-    app.run(host=args.host, port=args.port, threaded=True, use_reloader=False)
+    app.run(host=args.host, port=args.port, threaded=True, use_reloader=False, debug=True)
 
 
 if __name__ == "__main__":
