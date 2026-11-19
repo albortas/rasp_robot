@@ -114,10 +114,6 @@ function createCard(servo) {
       <button type="button" data-act="preset" data-delta="0">Reposo</button>
       <button type="button" data-act="preset" data-delta="45">+45°</button>
     </div>
-    <div class="row rest-row">
-      <label class="label" for="rest-${servo.name}">Rest</label>
-      <input id="rest-${servo.name}" class="rest-input" type="number" step="1" data-act="rest">
-    </div>
   `;
 
   card.addEventListener("click", async (event) => {
@@ -150,16 +146,6 @@ function createCard(servo) {
     scheduleAngle(servo.name, Number(slider.value));
   });
 
-  card.querySelector(".rest-input").addEventListener("change", async (event) => {
-    try {
-      applyState(await api(`/api/servo/${servo.name}/rest`, { angle: Number(event.target.value) }));
-      setDirty(true);
-    } catch (err) {
-      toast(err.message, true);
-      updateCard(card, servoByName(servo.name));
-    }
-  });
-
   updateCard(card, servo);
   return card;
 }
@@ -184,8 +170,6 @@ function updateCard(card, servo, resetSlider = true) {
   slider.min = servo.rest_angle - span;
   slider.max = servo.rest_angle + span;
   if (resetSlider) setSlider(card, servo.rest_angle);
-
-  card.querySelector(".rest-input").value = servo.rest_angle;
 }
 
 // ------------------------------------------------------------------ acciones

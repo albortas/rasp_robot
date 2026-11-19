@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marcha · Robodelta</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='gait.css') }}">
+</head>
+<body class="gait-body">
+  <header class="topbar">
+    <div class="title">
+      <h1>Generador de marcha</h1>
+      <p class="subtitle">Mueve los sliders y observa el ciclo de marcha. Nada se envia al robot hasta pulsar “Ejecutar”.</p>
+    </div>
+    <div class="status">
+      <a class="btn nav-link" href="/">Calibración</a>
+      <span id="mode-badge" class="badge">conectando…</span>
+      <span id="run-badge" class="badge hidden">MARCHA ACTIVA</span>
+    </div>
+    <div class="actions">
+      <button id="btn-reset-params" class="btn" type="button">Valores por defecto</button>
+      <button id="btn-rest-pose" class="btn" type="button">Neutro (IK)</button>
+      <button id="btn-disable" class="btn danger" type="button">Liberar servos</button>
+    </div>
+  </header>
+
+  <main class="gait-layout">
+    <section class="viz-card">
+      <div class="viz-head">
+        <div>
+          <h2>Ciclo de marcha</h2>
+          <p id="viz-sub" class="muted">Cargando simulación…</p>
+        </div>
+        <div class="viz-legend">
+          <span><i class="dot fl"></i>FL</span>
+          <span><i class="dot fr"></i>FR</span>
+          <span><i class="dot rl"></i>RL</span>
+          <span><i class="dot rr"></i>RR</span>
+          <span class="muted">Arrastra para girar · rueda para zoom</span>
+        </div>
+      </div>
+
+      <div id="canvas-wrap" class="canvas-wrap">
+        <canvas id="scene"></canvas>
+        <div class="canvas-hint">Arrastra para orbitar · doble clic para reiniciar vista</div>
+        <div id="ik-warning" class="ik-warning hidden">IK fuera de rango</div>
+      </div>
+
+      <div class="transport">
+        <button id="btn-play" class="btn primary" type="button">Pausa</button>
+        <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Frame">
+        <span id="frame-label" class="mono muted">0 / 0</span>
+        <label class="speed">
+          Velocidad
+          <select id="speed">
+            <option value="0.25">0.25×</option>
+            <option value="0.5" selected>0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1">1×</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="derived" id="derived"></div>
+
+      <div id="readout" class="readout"></div>
+    </section>
+
+    <aside class="panel">
+      <div class="panel-head">
+        <h2>Parámetros</h2>
+        <button id="btn-apply" class="btn primary" type="button">Ejecutar en robot</button>
+        <button id="btn-stop" class="btn danger" type="button" disabled>Detener</button>
+      </div>
+
+      <div id="groups"></div>
+
+      <div id="warnings" class="warnings hidden"></div>
+
+      <p class="footnote">
+        <strong>Vista:</strong> el cuerpo se dibuja fijo y los pies se mueven
+        respecto a él, igual que en el generador; no es un desplazamiento del
+        robot por el mundo.<br>
+        <strong>Seguridad:</strong> una sola marcha a la vez y con la alimentación
+        de servos activada. El proceso web es el único que puede usar el bus I2C;
+        no ejecutes <code>src/main.py</code> a la vez. Si algo va mal, pulsa
+        <em>Detener</em> o <em>Liberar servos</em>.
+      </p>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="{{ url_for('static', filename='gait.js') }}"></script>
+</body>
+</html>

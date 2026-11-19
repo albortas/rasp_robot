@@ -51,7 +51,7 @@ body {
 .badge {
   padding: 5px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.6px;
   border: 1px solid var(--line);
@@ -63,7 +63,7 @@ body {
 .muted { color: var(--muted); font-size: 15px; }
 
 .dirty {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--warn);
   border: 1px dashed var(--warn);
@@ -90,6 +90,8 @@ body {
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.05s;
 }
+
+a.btn { display: inline-block; text-decoration: none; }
 
 .btn:hover,
 .card button:hover { background: #243555; border-color: #3b5279; }
@@ -148,7 +150,7 @@ body {
   margin-bottom: 10px;
 }
 .joint { font-weight: 700; font-size: 16px; }
-.channel { font-size: 15px; color: var(--muted); white-space: nowrap; }
+.channel { font-size: 14px; color: var(--muted); white-space: nowrap; }
 
 .row {
   display: flex;
@@ -188,16 +190,6 @@ body {
 }
 
 .presets button { flex: 1; padding: 6px 0; font-size: 14px; }
-
-.rest-row input[type="number"] {
-  width: 72px;
-  font: inherit;
-  color: var(--text);
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 5px 8px;
-}
 
 /* ---------------------------------------------------------------- toast */
 .toast {

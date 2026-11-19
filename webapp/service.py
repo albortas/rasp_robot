@@ -129,13 +129,6 @@ class ServoService:
             self._send(name, servo.rest_angle)
             return self.state()
 
-    def set_rest(self, name: str, angle: int) -> dict:
-        with self._lock:
-            self._servo(name)
-            self.repo.update_servo(name, rest_angle=int(angle))
-            self._send(name, int(angle))
-            return self.state()
-
     def test_preset(self, name: str, delta: int = 0) -> dict:
         with self._lock:
             servo = self._servo(name)
