@@ -9,12 +9,18 @@ class BazierGait:
     STANCE = 0  # Contacto con el suelo
     SWING = 1  # Pierna en el aire
 
-    def __init__(self, dSref=[0.0, 0.5, 0.5, 0.0], dt = 0.01, Tswing=0.25) -> None:
+    def __init__(self, dSref=None, dt=0.01, Tswing=0.25,
+                 max_stance_ratio=1.3) -> None:
         # Desfase de fase por pata: [FL, FR, RL, RR]
-        self.dSref = dSref
+        self.dSref = list(dSref) if dSref is not None else [0.0, 0.5, 0.5, 0.0]
         self.Tswing = Tswing  # Tiempo de SWING
+        # Limite de Tstance respecto a Tswing. 1.3 es el valor estable
+        # historico; subirlo permite apoyos mas largos (experimental).
+        self.max_stance_ratio = max_stance_ratio
         self.dt = dt    # Paso de tiempo
-        self.Prev_fxyz = [0.0, 0.0, 0.0, 0.0]
+        # Ultima posicion absoluta del pie en el marco del cuerpo
+        # (None = todavia sin inicializar)
+        self.Prev_fxyz = [None, None, None, None]
         # La pata de referencia es FL, siempre 0
         self.ref_idx = 0.0  # Pata de referencia
         # Tiempo transcurrido desde el último touchdown
@@ -28,8 +34,8 @@ class BazierGait:
         self.time = 0.0  # Tiempo total transcurrido
         # Numero de puntos de control es n + 1 = 11 + 1 = 12
         self.NumControlPoints = 11
-        # Almacena las fases de todas las patas
-        self.Phases = self.dSref
+        # Almacena las fases de todas las patas (copia independiente)
+        self.Phases = list(self.dSref)
 
     def Get_ti(self, index, Tstride):
         """
@@ -249,40 +255,29 @@ class BazierGait:
                  el movimento de yaw
         """
 
-        # Magnitud del pie según el tipo de pata
-        default_body_to_foot_magnitude = np.sqrt(T_bf[0] ** 2 + T_bf[1] ** 2)
+        # Posicion previa (absoluta) del pie en el marco del cuerpo
+        prev = self.Prev_fxyz[index]
+        if prev is None:
+            prev = np.array([T_bf[0], T_bf[1], T_bf[2]], dtype=float)
 
-        # Angulo de rotacion segun el tipo de pata
-        default_body_to_foot_direction = np.arctan2(T_bf[1], T_bf[0])
-
-        # Coordenadas anteriores de la pata relativas a las coordenadas
-        # predeterminadas
-        g_xyz = self.Prev_fxyz[index] - np.array([T_bf[0], T_bf[1], T_bf[2]])
-
-        # Modulamos la magnitud para mantener el trazo del circulo
-        g_map = np.sqrt(g_xyz[0] ** 2 + g_xyz[1] ** 2)
-        th_mod = np.arctan2(g_map, default_body_to_foot_magnitude)
-
-        # Angulo corregido por el pie de la rotacion
-        # FR y RL
-        if index == 1 or index == 2:
-            phi_arc = np.pi / 2.0 + default_body_to_foot_direction + th_mod
-        # FL y RR
-        else:
-            phi_arc = np.pi / 2.0 - default_body_to_foot_direction + th_mod
+        # Direccion tangente al circulo en la posicion previa del pie.
+        # Es theta + 90 grados para las cuatro patas. La version anterior
+        # usaba "90 - theta" en FL y RR, lo que apuntaba casi radialmente y
+        # anulaba la mayor parte del giro.
+        phi_arc = np.arctan2(prev[1], prev[0]) + np.pi / 2.0
 
         return phi_arc
 
-    def SwingStep(self, phase, L, LateralFraction, YawRate, clearance_height, T_bf, key, index):
+    def SwingStep(self, phase, L, LateralFraction, yaw_arc, clearance_height, T_bf, key, index):
         """
         Calcula las coordenadas del paso para el periodo de Bezeir SWING
         usando una conbinacion de coordenadas de paso lineal y rotacional
         inicialmente descompuesta de la entra del usuario:
-        
+
         :param phase: Fase actual de la trayectoria.
-        :param L: Longitud de paso.
+        :param L: Longitud de paso lineal (semizancada).
         :param LateralFraction: Determina cuan lateral es el movimiento.
-        :param YawRate: Tasa guiñada (yaw) deseada del cuerpo.
+        :param yaw_arc: Longitud de arco (m) del componente de giro.
         :param cleareance_height: Altura de despeje del pie durante SWING.
         :param T_bf: Vector predeterminado de cuerpo a pie.
         :param key: Indica que pie se esta procesando.
@@ -298,30 +293,33 @@ class BazierGait:
                 phase, L, LateralFraction, clearance_height
                 )
 
-        X_delta_rot, Y_delta_rot, Z_delta_rot = self.BezierSwing(
-                phase, YawRate, phi_arc, clearance_height
+        X_delta_rot, Y_delta_rot, _ = self.BezierSwing(
+                phase, yaw_arc, phi_arc, clearance_height
                 )
 
+        # La componente Z de BezierSwing no depende de la amplitud, asi que
+        # sumar las dos curvas duplicaria la altura de despeje.
         coord = np.array([
             X_delta_lin + X_delta_rot,
             Y_delta_lin + Y_delta_rot,
-            Z_delta_lin + Z_delta_rot
+            Z_delta_lin
             ])
 
-        self.Prev_fxyz[index] = coord
+        self.Prev_fxyz[index] = np.array([T_bf[0], T_bf[1], T_bf[2]], dtype=float) + coord
 
         return coord
 
-    def StanceStep(self, phase, L, LateralFraction, YawRate, penetration_depth, T_bf, key, index):
+    def StanceStep(self, phase, L, LateralFraction, yaw_arc, penetration_depth, T_bf, key, index):
         """
         Calcula las coordenadas del paso para el periodo sinusoidal STANCE
         usando una combinacion de coordenadas de paso lineal y rotacional
         inicialmente descompuesta de la entrada del usuario:
-        L, LateralFraction y YawRate
-        
+        L, LateralFraction y yaw_arc
+
+        :param yaw_arc: Longitud de arco (m) del componente de giro.
         :param penetration_depth: Profundidad de penetracion del pie
                                   durante la fase de STANCE
-        
+
         :return: Coordenadas del pie relativas al cuerpo
         """
 
@@ -333,17 +331,19 @@ class BazierGait:
                 phase, L, LateralFraction, penetration_depth
                 )
 
-        X_delta_rot, Y_delta_rot, Z_delta_rot = self.SineStance(
-                phase, YawRate, phi_arc, penetration_depth
+        X_delta_rot, Y_delta_rot, _ = self.SineStance(
+                phase, yaw_arc, phi_arc, penetration_depth
                 )
 
+        # Igual que en SWING: la Z no depende de la amplitud y sumarla dos
+        # veces duplicaria la penetracion.
         coord = np.array([
             X_delta_lin + X_delta_rot,
             Y_delta_lin + Y_delta_rot,
-            Z_delta_lin + Z_delta_rot
+            Z_delta_lin
             ])
 
-        self.Prev_fxyz[index] = coord
+        self.Prev_fxyz[index] = np.array([T_bf[0], T_bf[1], T_bf[2]], dtype=float) + coord
 
         return coord
 
@@ -364,10 +364,16 @@ class BazierGait:
         # Solo para seguimiento
         self.Phases[index] = stored_phase
 
+        # YawRate entra en rad/s. La longitud de arco que recorre cada pie
+        # es yaw_rate * Tstance/2 * radio, con el mismo criterio que
+        # L = v * Tstance / 2 para el movimiento lineal.
+        radius = float(np.hypot(T_bf[0], T_bf[1]))
+        yaw_arc = YawRate * Tstance / 2.0 * radius
+
         if StanceSwing == self.STANCE:
-            return self.StanceStep(phase, L, LateralFraction, YawRate, penetration_depth, T_bf, key, index)
+            return self.StanceStep(phase, L, LateralFraction, yaw_arc, penetration_depth, T_bf, key, index)
         elif StanceSwing == self.SWING:
-            return self.SwingStep(phase, L, LateralFraction, YawRate, clearance_height, T_bf, key, index)
+            return self.SwingStep(phase, L, LateralFraction, yaw_arc, clearance_height, T_bf, key, index)
 
     def GenerateTrajectory(self,
                            L,
@@ -390,19 +396,25 @@ class BazierGait:
         # NOTA: L es la MITAD de la longitud de la zancada
         if vel != 0.0:
             Tstance = 2.0 * abs(L) / abs(vel)
+        elif YawRate != 0.0:
+            # Giro en el sitio: no hay velocidad lineal, pero si yaw. Sin
+            # esto, Tstance quedaria en 0 y el yaw se anularia.
+            Tstance = self.max_stance_ratio * self.Tswing
         else:
             Tstance = 0.0
             L = 0.0
             self.TD = False
             self.time = 0.0
             self.time_elapsed_TD = 0.0
+            self.Prev_fxyz = [None, None, None, None]
 
         # Luego, obtenemos el tiempo desde el ultimo touchdown e Incrementaremos
         # el contador de Tiempo
         if dt is None:
             dt = self.dt
 
-        YawRate *= dt
+        # YawRate se mantiene en rad/s: la longitud de arco por pata se
+        # calcula en GetFootStep y ya no depende de dt.
 
         # Detectamos pasos de tiempo inviables
         if Tstance < dt:
@@ -412,9 +424,10 @@ class BazierGait:
             self.time = 0.0
             self.time_elapsed_TD = 0.0
             YawRate = 0.0
+            self.Prev_fxyz = [None, None, None, None]
         # NOTA: ES MUCHO MAS ESTABLE CON ESTO
-        elif Tstance > 1.3 * self.Tswing:
-            Tstance = 1.3 * self.Tswing
+        elif Tstance > self.max_stance_ratio * self.Tswing:
+            Tstance = self.max_stance_ratio * self.Tswing
 
         # Verificamos contactos
         if contacts[0] == 1 and Tstance > dt:
@@ -436,6 +449,10 @@ class BazierGait:
             if key == "RR":
                 self.dSref[i] = 0.0
             _, p_bf = TransToRp(Tbf_in)
+
+            # Primera pasada tras arrancar/parar: no hay posicion previa.
+            if self.Prev_fxyz[i] is None:
+                self.Prev_fxyz[i] = np.array(p_bf, dtype=float)
 
             if Tstance > 0.0:
                 step_coord = self.GetFootStep(L, LateralFraction, YawRate,

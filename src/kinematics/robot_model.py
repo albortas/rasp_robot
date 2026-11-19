@@ -111,22 +111,14 @@ class RobotModel:
 
             # Paso 2: obtener T_hf para cada pierna
 
-            # METODO DE ADICION DE VECTORES
-            _, p_bh = TransToRp(T_bh)
-            _, p_bf = TransToRp(T_bf[key])
-            p_hf0 = p_bf - p_bh
-
             # METODO DE TRANSFORMACION
             # hb -> hip to body
             T_hb = TransInv(T_bh)
-            
+
+            # El vector cadera-pie debe expresarse en el marco del cuerpo.
+            # La resta directa p_bf - p_bh mezcla marcos cuando rpy != 0.
             T_hf = T_hb @ T_bf[key]
-            _, p_hf1 = TransToRp(T_hf)
-
-            if not np.array_equal(p_hf0, p_hf1):
-                print("NO ES IGUAL p_hf")
-
-            p_hf = p_hf1
+            _, p_hf = TransToRp(T_hf)
 
             HipToFoot_Dic[key] = p_hf
 

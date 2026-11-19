@@ -19,11 +19,31 @@ class GaitInteface:
         self.penetration_depth = 0.005
 
     def compute_gait(self, vel_x, vel_y, yaw_rate):
-        
-        L = np.hypot(vel_x, vel_y) / 2.0        
-        LateralFraction = np.arctan2(vel_y, vel_x) if L > 0.01 else 0.0
-        vel = np.hypot(vel_y, vel_x)
-        
+        """
+        Convierte la orden de velocidad del mando en parametros del generador.
+
+        :param vel_x: Velocidad lineal en X (m/s).
+        :param vel_y: Velocidad lineal en Y (m/s).
+        :param yaw_rate: Velocidad angular en Z (rad/s).
+        :return: Diccionario T_bf con la posicion deseada de cada pie.
+        """
+        vel_x = float(vel_x)
+        vel_y = float(vel_y)
+        yaw_rate = float(np.clip(yaw_rate, -self.max_yaw_rate, self.max_yaw_rate))
+
+        vel = float(np.hypot(vel_x, vel_y))
+        if vel > 1e-4:
+            # La direccion se decide con el vector completo, no con la
+            # semizancada: si no, los comandos laterales lentos se
+            # convertian en avance.
+            vel = min(vel, self.max_vel_xy)
+            L = vel / 2.0
+            LateralFraction = float(np.arctan2(vel_y, vel_x))
+        else:
+            vel = 0.0
+            L = 0.0
+            LateralFraction = 0.0
+
         return self.gait_gen.GenerateTrajectory(
             L=L,
             LateralFraction=LateralFraction,
