@@ -81,7 +81,9 @@
       <p class="footnote">
         <strong>Vista:</strong> el cuerpo se dibuja fijo y los pies se mueven
         respecto a él, igual que en el generador; no es un desplazamiento del
-        robot por el mundo.<br>
+        robot por el mundo. Las piernas se dibujan articuladas con
+        <code>L1 = 61.5</code>, <code>L2 = 108.0</code> y
+        <code>L3 = 130.2</code> mm aplicando los ángulos de la IK.<br>
         <strong>Seguridad:</strong> una sola marcha a la vez y con la alimentación
         de servos activada. El proceso web es el único que puede usar el bus I2C;
         no ejecutes <code>src/main.py</code> a la vez. Si algo va mal, pulsa

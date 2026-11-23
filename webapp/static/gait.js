@@ -28,17 +28,19 @@ const FALLBACK_LIMITS = {
   yaw: [-15, 15],
   L: [0.0, 0.06],
   vel: [0.0, 0.15],
-  lateral: [-180, 180],
+  lateral: [-90, 90],
   yaw_rate: [-30, 30],
   clearance_height: [0.01, 0.08],
   penetration_depth: [0.0, 0.02],
   Tswing: [0.15, 0.4],
+  max_stance_ratio: [1.0, 5.0],
 };
 
 const FALLBACK_DEFAULTS = {
   x: 0, y: 0, z: 0, roll: 0, pitch: 0, yaw: 0,
   L: 0.025, vel: 0.05, lateral: 0, yaw_rate: 0,
   clearance_height: 0.04, penetration_depth: 0.005, Tswing: 0.25,
+  max_stance_ratio: 1.3,
 };
 
 const GROUPS = [
@@ -364,6 +366,7 @@ function resizeCanvas() {
 }
 
 const view = { w: 800, h: 500 };
+const GROUND_Z = -0.174;
 
 function baseScale() {
   return Math.min(view.w * 0.95, view.h * 1.45) * 1.15;
@@ -431,7 +434,7 @@ function polygon(ctx, pts, fill, stroke, width = 1) {
 }
 
 function drawGround(ctx) {
-  const z = -0.175;
+  const z = GROUND_Z;
   const half = 0.34;
   const step = 0.05;
   ctx.save();
@@ -502,7 +505,7 @@ function drawTrails(ctx) {
     ctx.lineWidth = 1;
     for (const leg of LEG_ORDER) {
       const b = preview.base_feet[leg];
-      const p = project([b[0], b[1], -0.174]);
+      const p = project([b[0], b[1], GROUND_Z]);
       ctx.beginPath();
       ctx.moveTo(p.x - 4, p.y);
       ctx.lineTo(p.x + 4, p.y);
@@ -515,13 +518,112 @@ function drawTrails(ctx) {
 }
 
 function drawShadow(ctx, foot) {
-  const p = project([foot[0], foot[1], -0.174]);
+  const p = project([foot[0], foot[1], GROUND_Z]);
   ctx.save();
   ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
   ctx.beginPath();
   ctx.ellipse(p.x, p.y, 5.5, 2.6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+}
+
+function bodyToWorld(R, pos, local) {
+  const r = applyR(R, local);
+  return [pos[0] + r[0], pos[1] + r[1], pos[2] + r[2]];
+}
+
+/** Mezcla dos colores hex (#rrggbb); t=0 deja `a`, t=1 deja `b`. */
+function mixHex(a, b, t) {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return (
+    "#" +
+    pa
+      .map((v, i) => Math.round(v + (pb[i] - v) * t).toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+/** Eslabón de la pierna con borde, cuerpo y brillo para dar volumen. */
+function drawLink(ctx, a, b, width, color) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 0.4) return;
+
+  ctx.save();
+  ctx.lineCap = "round";
+
+  // Borde oscuro.
+  ctx.strokeStyle = "rgba(5, 10, 20, 0.9)";
+  ctx.lineWidth = width + Math.max(2, width * 0.5);
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+
+  // Cuerpo del eslabón.
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.stroke();
+
+  // Brillo lateral (efecto cilindro).
+  const nx = -dy / len;
+  const ny = dx / len;
+  const off = width * 0.26;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+  ctx.lineWidth = Math.max(1, width * 0.28);
+  ctx.beginPath();
+  ctx.moveTo(a.x + nx * off, a.y + ny * off);
+  ctx.lineTo(b.x + nx * off, b.y + ny * off);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawJoint(ctx, p, radius, color) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = "#111c30";
+  ctx.fill();
+  ctx.lineWidth = Math.max(1.2, radius * 0.5);
+  ctx.strokeStyle = color;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFoot(ctx, p, radius, color, swing) {
+  // Suela ancha y plana: así no se confunde con una articulación.
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y, radius * 1.2, radius * 0.6, 0, 0, Math.PI * 2);
+  if (swing) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  } else {
+    ctx.fillStyle = "rgba(10, 18, 32, 0.9)";
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.6, radius * 0.34);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** Frame del preview que toca dibujar. */
+function sceneFrame() {
+  if (!preview) return null;
+  const n = preview.frames;
+  const i = ((Math.floor(frameIdx) % n) + n) % n;
+  const d = preview.data;
+  return {
+    feet: d.feet[i],
+    swing: d.swing[i].map((s) => !!s),
+    joints: d.joints ? d.joints[i] : null,
+  };
 }
 
 function drawBody(ctx, body, hips, dims) {
@@ -607,16 +709,16 @@ function drawScene() {
     return;
   }
 
-  const n = preview.frames;
-  const i = ((Math.floor(frameIdx) % n) + n) % n;
-  const feet = preview.data.feet[i];
-  const swing = preview.data.swing[i];
   const body = preview.body;
   const dims = preview.dims;
   const R = rpyMatrix(body.rpy_deg[0], body.rpy_deg[1], body.rpy_deg[2]);
+  const frame = sceneFrame();
+  const feet = frame ? frame.feet : LEG_ORDER.map((leg) => preview.base_feet[leg]);
+  const swing = frame ? frame.swing : LEG_ORDER.map(() => false);
+  const joints = frame ? frame.joints : null;
 
   const hipWorld = {};
-  for (const leg of LEG_ORDER) hipWorld[leg] = add(body.pos, applyR(R, preview.hips[leg]));
+  for (const leg of LEG_ORDER) hipWorld[leg] = bodyToWorld(R, body.pos, preview.hips[leg]);
 
   for (let j = 0; j < LEG_ORDER.length; j++) drawShadow(ctx, feet[j]);
 
@@ -624,52 +726,75 @@ function drawScene() {
   // posiciones se leen siempre. Es una vista esquematica, no un render solido.
   drawBody(ctx, body, preview.hips, dims);
 
-  // Orden de pintado por profundidad del pie (lejos primero).
-  const order = LEG_ORDER.map((leg, j) => ({
-    leg,
-    j,
-    depth: project(feet[j]).depth,
-  })).sort((a, b) => a.depth - b.depth);
+  // Tamaños proporcionales a la escala de proyección (metros -> píxeles).
+  const s = baseScale() * cam.zoom;
+  const hipW = Math.max(2, 0.0072 * s);
+  const thighW = Math.max(3, 0.0115 * s);
+  const shinW = Math.max(2.5, 0.0098 * s);
+  const hipR = Math.max(2.4, 0.0075 * s);
+  const kneeR = Math.max(2.4, 0.0082 * s);
+  const footR = Math.max(4, 0.0105 * s);
 
-  for (const { leg, j } of order) {
-    const hip = project(hipWorld[leg]);
-    const foot = project(feet[j]);
+  // Orden de pintado por profundidad (lejos primero).
+  const order = LEG_ORDER.map((leg, j) => {
+    const hipP = project(hipWorld[leg]);
+    const footP = project(feet[j]);
+    let j1 = null;
+    let j2 = null;
+    if (joints && joints[leg]) {
+      j1 = project(bodyToWorld(R, body.pos, joints[leg][0]));
+      j2 = project(bodyToWorld(R, body.pos, joints[leg][1]));
+    }
+    return {
+      leg,
+      j,
+      hipP,
+      footP,
+      j1,
+      j2,
+      depth: (hipP.depth + footP.depth) / 2,
+    };
+  }).sort((a, b) => b.depth - a.depth);
+
+  for (const { leg, j, hipP, footP, j1, j2 } of order) {
     const color = LEG_COLORS[leg];
+    // El eslabón L1 (brazo de cadera) va apagado; la espinilla, más clara.
+    const hipLinkColor = mixHex(color, "#8da2c0", 0.55);
+    const shinColor = mixHex(color, "#ffffff", 0.18);
+    const isSwing = swing[j];
+
+    // Línea punteada al suelo: ayuda a leer la altura del pie.
+    const groundP = project([feet[j][0], feet[j][1], GROUND_Z]);
+    ctx.save();
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = isSwing ? 0.45 : 0.2;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(groundP.x, groundP.y);
+    ctx.lineTo(footP.x, footP.y);
+    ctx.stroke();
+    ctx.restore();
+
+    if (j1 && j2) {
+      // Cadena real: cadera -> L1 -> rodilla -> L3 -> pie.
+      drawLink(ctx, hipP, j1, hipW, hipLinkColor);
+      drawLink(ctx, j1, j2, thighW, color);
+      drawLink(ctx, j2, footP, shinW, shinColor);
+      drawJoint(ctx, j1, Math.max(2, hipR * 0.8), hipLinkColor);
+      drawJoint(ctx, j2, kneeR, color);
+    } else {
+      // Respaldo si el servidor no envia los puntos articulares.
+      drawLink(ctx, hipP, footP, thighW * 0.9, color);
+    }
+
+    drawJoint(ctx, hipP, hipR, color);
+    drawFoot(ctx, footP, footR, color, isSwing);
 
     ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = 0.92;
-    ctx.beginPath();
-    ctx.moveTo(hip.x, hip.y);
-    ctx.lineTo(foot.x, foot.y);
-    ctx.stroke();
-
-    // Rodilla aproximada: interpolación con elevación para dar volumen.
-    const mid = { x: (hip.x + foot.x) / 2, y: (hip.y + foot.y) / 2 };
-    ctx.globalAlpha = 0.55;
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(mid.x, mid.y, 2, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Pie.
-    const isSwing = !!swing[j];
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    if (isSwing) {
-      ctx.fillStyle = color;
-      ctx.arc(foot.x, foot.y, 5.5, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2.2;
-      ctx.arc(foot.x, foot.y, 5.5, 0, Math.PI * 2);
-      ctx.stroke();
-    }
     ctx.fillStyle = color;
     ctx.font = "bold 10px system-ui";
-    ctx.fillText(leg, foot.x + 7, foot.y - 6);
+    ctx.fillText(leg, footP.x + footR + 3, footP.y - 6);
     ctx.restore();
   }
 }

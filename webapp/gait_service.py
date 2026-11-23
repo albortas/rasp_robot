@@ -50,7 +50,7 @@ DEFAULTS = {
     "vel": 0.05,
     "lateral": 0.0,
     "yaw_rate": 0.0,
-    "clearance_height": 0.04,
+    "clearance_height": 0.045,
     "penetration_depth": 0.005,
     "Tswing": 0.25,
     "max_stance_ratio": 1.3,
@@ -58,18 +58,18 @@ DEFAULTS = {
 
 # Limites de seguridad. El servidor recorta siempre; la UI usa los mismos.
 LIMITS = {
-    "x": (-0.04, 0.04),
-    "y": (-0.04, 0.04),
-    "z": (-0.03, 0.03),
-    "roll": (-15.0, 15.0),
-    "pitch": (-15.0, 15.0),
-    "yaw": (-15.0, 15.0),
+    "x": (-0.1, 0.1),
+    "y": (-0.1, 0.1),
+    "z": (-0.1, 0.1),
+    "roll": (-45.0, 45.0),
+    "pitch": (-45.0, 45.0),
+    "yaw": (-45.0, 45.0),
     "L": (0.0, 0.06),
     "vel": (0.0, 0.15),
     # LateralFraction es una direccion: +-90 cubre adelante con lateral
     # izquierda/derecha. Mas alla de 90 el pie iria hacia atras.
     "lateral": (-90.0, 90.0),
-    "yaw_rate": (-30.0, 30.0),
+    "yaw_rate": (-115.0, 115.0),
     "clearance_height": (0.01, 0.08),
     "penetration_depth": (0.0, 0.02),
     "Tswing": (0.15, 0.4),
@@ -207,6 +207,24 @@ class GaitService:
     def _round3(values) -> list[float]:
         return [round(float(v), 5) for v in values]
 
+    def _joints(self, T_bf) -> dict:
+        """Puntos articulares [fin L1, rodilla] en el marco del cuerpo.
+
+        Para cada pata se resuelve la IK de su pie objetivo respecto a la
+        cadera y se aplica la cinematica directa con las mismas longitudes
+        L1/L2/L3 del modelo. Con el cuerpo plano los angulos coinciden con los
+        que se envian a los servos; con inclinacion se usa la IK de la
+        posicion objetivo para que el dibujo quede cerrado sobre el pie.
+        """
+        joints = {}
+        for leg in LEG_ORDER:
+            hip = self.robot.WorldToHip[leg][:3, 3]
+            target = np.asarray(T_bf[leg][:3, 3], dtype=float) - hip
+            theta = self.robot.inverse.solve(self.robot.Legs[leg], target)
+            p1, p2, _ = self.robot.forward.solve(self.robot.Legs[leg], theta)
+            joints[leg] = [self._round3(hip + p1), self._round3(hip + p2)]
+        return joints
+
     @staticmethod
     def _implied_motion(feet, swing, dt: float = DT) -> dict:
         """Velocidad lineal y yaw del cuerpo implicados por los pies en apoyo.
@@ -318,6 +336,7 @@ class GaitService:
         feet = []
         angles = []
         swing = []
+        joints = []
         bad_frames = 0
         max_angle = 0.0
         warmup = 0
@@ -362,6 +381,7 @@ class GaitService:
             feet.append(frame_feet)
             angles.append(frame_angles)
             swing.append(frame_swing)
+            joints.append(self._joints(T_bf))
 
         if timing["moving"]:
             # Calentar dos periodos y capturar exactamente un ciclo: desde un
@@ -445,10 +465,18 @@ class GaitService:
                 "hip_x": self.robot.hip_x,
                 "hip_y": self.robot.hip_y,
                 "height": self.robot.height,
+                "L1": self.robot.L1,
+                "L2": self.robot.L2,
+                "L3": self.robot.L3,
             },
             "ik_ok": bad_frames == 0,
             "max_angle": round(max_angle, 1),
-            "data": {"feet": feet, "angles": angles, "swing": swing},
+            "data": {
+                "feet": feet,
+                "angles": angles,
+                "swing": swing,
+                "joints": joints,
+            },
         }
 
     # ---------------------------------------------------------------- ejecutar
@@ -585,6 +613,7 @@ class GaitService:
                             leg: bool(gen.Phases[i] >= 1.0)
                             for i, leg in enumerate(LEG_ORDER)
                         },
+                        "joints": self._joints(T_bf),
                     }
                     # Mezcla lineal neutro -> marcha al arrancar.
                     alpha = min(1.0, (time.perf_counter() - start_t) / 0.5)
