@@ -50,9 +50,9 @@ DEFAULTS = {
     "vel": 0.05,
     "lateral": 0.0,
     "yaw_rate": 0.0,
-    "clearance_height": 0.045,
-    "penetration_depth": 0.005,
-    "Tswing": 0.25,
+    "clearance_height": 0.04,
+    "penetration_depth": 0.003,
+    "Tswing": 0.20,
     "max_stance_ratio": 1.3,
 }
 
